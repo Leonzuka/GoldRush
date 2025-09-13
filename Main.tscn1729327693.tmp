@@ -1,0 +1,94 @@
+[gd_scene load_steps=5 format=3 uid="uid://yd0mn2qcag5t"]
+
+[ext_resource type="Script" uid="uid://b66a8k0ob7347" path="res://GameManager.gd" id="1_5c8ka"]
+[ext_resource type="PackedScene" path="res://Player.tscn" id="2_0h8ky"]
+[ext_resource type="Script" uid="uid://c7scwco80nf5m" path="res://TerrainManager.gd" id="3_2w5rr"]
+[ext_resource type="Script" uid="uid://cl3ix2h45vjpd" path="res://UI.gd" id="4_ui_script"]
+
+[node name="Main" type="Node2D"]
+
+[node name="GameManager" type="Node" parent="."]
+script = ExtResource("1_5c8ka")
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="TerrainManager" type="TileMapLayer" parent="World"]
+script = ExtResource("3_2w5rr")
+
+[node name="Player" parent="World" instance=ExtResource("2_0h8ky")]
+position = Vector2(400, -50)
+
+[node name="UI" type="CanvasLayer" parent="."]
+script = ExtResource("4_ui_script")
+
+[node name="HUD" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GoldLabel" type="Label" parent="UI/HUD"]
+layout_mode = 0
+anchor_right = 0.2
+anchor_bottom = 0.1
+text = "Ouro: 0/10"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MoneyLabel" type="Label" parent="UI/HUD"]
+layout_mode = 0
+anchor_left = 0.8
+anchor_right = 1.0
+anchor_bottom = 0.1
+text = "Dinheiro: $0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Shop" type="Control" parent="UI"]
+visible = false
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ShopPanel" type="Panel" parent="UI/Shop"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ShopTitle" type="Label" parent="UI/Shop"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.2
+offset_left = -50.0
+offset_right = 50.0
+grow_horizontal = 2
+text = "LOJA"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="UI/Shop"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -30.0
+offset_bottom = 30.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "X"

@@ -1,0 +1,44 @@
+[gd_scene load_steps=3 format=3 uid="uid://d4aonrl6andkp"]
+
+[ext_resource type="Script" uid="uid://do4jx4feuhfxd" path="res://Player.gd" id="1_5h8mv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1rhqc"]
+size = Vector2(24, 32)
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_5h8mv")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1rhqc")
+
+[node name="Sprite2D" type="ColorRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -12.0
+offset_top = -16.0
+offset_right = 12.0
+offset_bottom = 16.0
+color = Color(0, 0, 1, 1)
+
+[node name="DigTimer" type="Timer" parent="."]
+one_shot = true
+
+[node name="DigIndicator" type="ColorRect" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -20.0
+offset_right = 16.0
+offset_bottom = -16.0
+color = Color(1, 1, 0, 0.7)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[connection signal="timeout" from="DigTimer" to="." method="_on_dig_timer_timeout"]
