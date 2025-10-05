@@ -16,7 +16,8 @@ GoldRush is a 2D mining game inspired by Turmoil, developed in Godot 4.4 with mo
 ## Game Architecture
 
 ### Core Systems
-- **TerrainManager.gd**: Procedural terrain generation using TileMapLayer (Godot 4.4+)
+- **TerrainManager.gd**: Hybrid terrain system - supports both visual editing and procedural generation using TileMapLayer (Godot 4.4+)
+- **TerrainEditor.tscn**: Visual terrain editor for creating custom maps in Godot editor
 - **Player.gd**: Movement, jumping, and digging mechanics
 - **GameManager.gd**: Central game state, inventory, money, and upgrade management
 - **UI.gd**: HUD and shop interface management
@@ -44,19 +45,25 @@ GoldRush is a 2D mining game inspired by Turmoil, developed in Godot 4.4 with mo
 ### Scenes
 - `Main.tscn` - Main game scene with world, UI, and managers
 - `Player.tscn` - Player character with collision and visual components
+- `TerrainEditor.tscn` - Visual terrain editor for map creation
 
 ### Scripts
 - `GameManager.gd` - Central game logic and state management
-- `TerrainManager.gd` - World generation and block management
+- `TerrainManager.gd` - Hybrid terrain system with visual/procedural support
+- `TerrainEditorScript.gd` - Visual terrain editor controls and functionality
 - `Player.gd` - Player controls and digging mechanics
 - `UI.gd` - Interface management and shop system
 
-### Configuration
+### Assets & Configuration
+- `terrain_tileset.tres` - Editable TileSet resource for visual terrain editing
+- `terrain_tiles.png` - Terrain texture atlas (grass, dirt, stone)
+- `terrain_data.json` - Saved terrain layout data
 - `project.godot` - Project settings with custom input actions
 - `CONTROLES.md` - Player control reference
 
 ### Documentation
 - `docs/GODOT_TILEMAPLAYER.md` - TileMapLayer migration guide and API reference
+- `TERRAIN_EDITOR_GUIDE.md` - Complete guide for visual terrain editing system
 
 ## Game Balance
 

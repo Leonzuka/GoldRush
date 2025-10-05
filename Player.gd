@@ -12,6 +12,7 @@ var dig_progress: float = 0.0
 # Referências
 @onready var dig_timer = $DigTimer
 @onready var dig_indicator = $DigIndicator
+@onready var animated_sprite = $AnimatedSprite2D
 @onready var game_manager = get_node("../../GameManager")
 @onready var terrain_manager = get_node("../TerrainManager")
 
@@ -31,6 +32,42 @@ func _physics_process(delta):
 	handle_movement()
 	handle_digging()
 	move_and_slide()
+	update_animation()
+
+func update_animation():
+	# Prioridade 1: Animações de mineração (se estiver cavando)
+	if is_digging:
+		var player_pos = terrain_manager.world_to_tile_pos(global_position)
+		var dig_direction = dig_target_pos - player_pos
+
+		# Mineração para baixo
+		if dig_direction.y > 0:
+			animated_sprite.play("down")
+		# Mineração para cima
+		elif dig_direction.y < 0:
+			animated_sprite.play("mining_up")
+		# Mineração horizontal
+		elif dig_direction.x < 0:
+			animated_sprite.play("mining_left")
+		elif dig_direction.x > 0:
+			animated_sprite.play("mining_right")
+		return
+
+	# Prioridade 2: Animação de queda
+	if not is_on_floor() and velocity.y > 0:
+		animated_sprite.play("fall")
+		return
+
+	# Prioridade 3: Animações de caminhada
+	if abs(velocity.x) > 10:  # Se está se movendo horizontalmente
+		if velocity.x < 0:
+			animated_sprite.play("walking_left")
+		else:
+			animated_sprite.play("walking_right")
+		return
+
+	# Prioridade 4: Idle (parado)
+	animated_sprite.play("default")
 
 func handle_gravity(delta):
 	# Aplicar gravidade se não estiver no chão
