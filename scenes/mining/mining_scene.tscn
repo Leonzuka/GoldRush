@@ -1,0 +1,28 @@
+[gd_scene load_steps=6 format=3 uid="uid://dg5ckvm46txu1"]
+
+[ext_resource type="Script" path="res://scripts/systems/mining_session.gd" id="1_session"]
+[ext_resource type="PackedScene" uid="uid://bhpj6r7vy3uxm" path="res://scenes/mining/terrain.tscn" id="2_terrain"]
+[ext_resource type="PackedScene" uid="uid://c8vg2aujnkk6b" path="res://scenes/mining/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" uid="uid://dptwrvk52oqil" path="res://scenes/ui/hud.tscn" id="4_hud"]
+[ext_resource type="PackedScene" uid="uid://c2y4mpxfhpdnd" path="res://scenes/ui/round_end_panel.tscn" id="5_round_end"]
+
+[node name="MiningScene" type="Node2D"]
+
+[node name="MiningSession" type="Node" parent="." groups=["session_manager"]]
+script = ExtResource("1_session")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 360)
+
+[node name="Terrain" parent="." instance=ExtResource("2_terrain")]
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+position = Vector2(400, 100)
+
+[node name="GoldNuggetContainer" type="Node2D" parent="." groups=["nugget_container"]]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="HUD" parent="CanvasLayer" instance=ExtResource("4_hud")]
+
+[node name="RoundEndPanel" parent="CanvasLayer" instance=ExtResource("5_round_end")]
