@@ -8,7 +8,6 @@ Este arquivo organiza as próximas tarefas e melhorias do projeto GoldRush.
 - [ ] Validar balanceamento de dificuldade dos plots
 - [ ] F3 não está mostrando ouro
 - [ ] W faz o player voar.
-- [ ] O player ocupa um pouco mais de 2 blocos horinzontalmente
 - [ ] Não estou encontrando ouro e o Scan não está funcionando
 
 ## 🟡 Phase 2: Sistema de Mercado

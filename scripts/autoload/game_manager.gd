@@ -46,6 +46,10 @@ func _input(event: InputEvent) -> void:
 			change_money(1000)
 			print("[CHEAT] Added $1000")
 
+	# Toggle help dialog (H key during mining)
+	if event.is_action_pressed("toggle_help") and current_state == GameState.MINING:
+		EventBus.help_opened.emit()
+
 # ============================================================================
 # STATE TRANSITIONS
 # ============================================================================

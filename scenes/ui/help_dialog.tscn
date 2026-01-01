@@ -1,0 +1,251 @@
+[gd_scene load_steps=2 format=3 uid="uid://c7d8faf0g1h2i"]
+
+[ext_resource type="Script" path="res://scripts/ui/help_dialog_controller.gd" id="1_help"]
+
+[node name="HelpDialog" type="Control"]
+visible = false
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_help")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -300.0
+offset_right = 350.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer"]
+layout_mode = 2
+
+[node name="TitleBar" type="HBoxContainer" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="PanelContainer/VBoxContainer/TitleBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "Keyboard Shortcuts"
+
+[node name="CloseButton" type="Button" parent="PanelContainer/VBoxContainer/TitleBar"]
+layout_mode = 2
+text = "X"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MovementSection" type="VBoxContainer" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SectionLabel" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Movement"
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 5
+columns = 2
+
+[node name="Key1" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "W / ↑"
+horizontal_alignment = 2
+
+[node name="Desc1" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Move Up"
+
+[node name="Key2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "A / ←"
+horizontal_alignment = 2
+
+[node name="Desc2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Move Left"
+
+[node name="Key3" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "S / ↓"
+horizontal_alignment = 2
+
+[node name="Desc3" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Move Down"
+
+[node name="Key4" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "D / →"
+horizontal_alignment = 2
+
+[node name="Desc4" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MovementSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Move Right"
+
+[node name="HSeparator" type="HSeparator" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="MiningSection" type="VBoxContainer" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SectionLabel" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MiningSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Mining"
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MiningSection"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 5
+columns = 2
+
+[node name="Key1" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MiningSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Left Click"
+horizontal_alignment = 2
+
+[node name="Desc1" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MiningSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Drill Tile"
+
+[node name="Key2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MiningSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Space"
+horizontal_alignment = 2
+
+[node name="Desc2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MiningSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Scan for Gold"
+
+[node name="HSeparator2" type="HSeparator" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="UISection" type="VBoxContainer" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SectionLabel" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/UISection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "User Interface"
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/UISection"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 5
+columns = 2
+
+[node name="Key1" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/UISection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "ESC"
+horizontal_alignment = 2
+
+[node name="Desc1" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/UISection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Pause Game"
+
+[node name="Key2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/UISection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "H"
+horizontal_alignment = 2
+
+[node name="Desc2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/UISection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Toggle Help"
+
+[node name="HSeparator3" type="HSeparator" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="DebugSection" type="VBoxContainer" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SectionLabel" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/DebugSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Debug (Dev Build)"
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/DebugSection"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 5
+columns = 2
+
+[node name="Key1" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/DebugSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "F1"
+horizontal_alignment = 2
+
+[node name="Desc1" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/DebugSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Add $1000"
+
+[node name="Key2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/DebugSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "F3"
+horizontal_alignment = 2
+
+[node name="Desc2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/DebugSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Reveal All Gold"
+
+[node name="Key3" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/DebugSection/GridContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "F12"
+horizontal_alignment = 2
+
+[node name="Desc3" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/DebugSection/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Toggle Debug Overlay"
+
+[node name="CloseButtonBottom" type="Button" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+text = "Close [ESC]"

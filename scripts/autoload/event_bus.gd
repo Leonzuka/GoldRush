@@ -79,3 +79,25 @@ signal debug_mode_changed(enabled: bool)
 
 ## Emitted to reveal all gold (cheat: F3)
 signal debug_reveal_gold()
+
+# ============================================================================
+# UI SIGNALS
+# ============================================================================
+
+## Emitted when game is paused (ESC during mining)
+signal game_paused()
+
+## Emitted when game is resumed from pause
+signal game_resumed()
+
+## Emitted when help dialog is opened
+signal help_opened()
+
+## Emitted when help dialog is closed
+signal help_closed()
+
+## Emitted when settings menu is opened
+signal settings_opened()
+
+## Emitted when settings menu is closed
+signal settings_closed()
