@@ -24,11 +24,15 @@ var player: CharacterBody2D
 var is_ready_to_scan: bool = true
 var cooldown_timer: Timer
 
+# Debug state
+var f3_was_pressed: bool = false
+
 # ============================================================================
 # INITIALIZATION
 # ============================================================================
 
 func _ready() -> void:
+	add_to_group("scanner")
 	player = get_parent() as CharacterBody2D
 
 	# Find TerrainManager
@@ -49,6 +53,13 @@ func _process(_delta: float) -> void:
 	# Scan input (Spacebar)
 	if Input.is_action_just_pressed("scan"):
 		perform_scan()
+
+	# Debug: Reveal all gold (F3)
+	var f3_pressed = Input.is_physical_key_pressed(KEY_F3)
+	if f3_pressed and not f3_was_pressed:
+		print("[Scanner] F3 pressed - revealing all gold")
+		EventBus.debug_reveal_gold.emit()
+	f3_was_pressed = f3_pressed
 
 func perform_scan() -> Array:
 	if not is_ready_to_scan or not terrain_manager or not player:

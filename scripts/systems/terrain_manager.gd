@@ -26,10 +26,11 @@ class_name TerrainManager
 var gold_deposits: Dictionary = {}
 
 ## Tile IDs (matches tileset configuration)
+## Using atlas coordinates (x, y) for tiles WITH collision shapes
 const TILE_EMPTY: int = -1
-const TILE_DIRT: int = 0
-const TILE_STONE: int = 1
-const TILE_BEDROCK: int = 2
+const TILE_DIRT_ATLAS: Vector2i = Vector2i(0, 24)     # Dirt tile with collision
+const TILE_STONE_ATLAS: Vector2i = Vector2i(1, 24)    # Stone tile with collision
+const TILE_BEDROCK_ATLAS: Vector2i = Vector2i(2, 24)  # Bedrock tile with collision
 
 # ============================================================================
 # GENERATION
@@ -60,21 +61,25 @@ func _generate_terrain_tiles() -> void:
 	for y in range(terrain_height):
 		for x in range(terrain_width):
 			var depth_factor: float = float(y) / terrain_height
-			var tile_id: int
+			var tile_atlas: Vector2i
 
 			# Stratified layers based on depth
 			if depth_factor < 0.2:
-				tile_id = TILE_DIRT
+				tile_atlas = TILE_DIRT_ATLAS
 			elif depth_factor < 0.85:
-				tile_id = TILE_STONE
+				tile_atlas = TILE_STONE_ATLAS
 			else:
-				tile_id = TILE_BEDROCK
+				tile_atlas = TILE_BEDROCK_ATLAS
 
 			# Add some noise for variation
 			if randf() < 0.1:
-				tile_id = min(tile_id + 1, TILE_BEDROCK)
+				# Slightly vary the tile (shift to next column in atlas)
+				if tile_atlas == TILE_DIRT_ATLAS:
+					tile_atlas = TILE_STONE_ATLAS
+				elif tile_atlas == TILE_STONE_ATLAS:
+					tile_atlas = TILE_BEDROCK_ATLAS
 
-			tilemap.set_cell(0, Vector2i(x, y), 0, Vector2i(tile_id, 0))
+			tilemap.set_cell(0, Vector2i(x, y), 0, tile_atlas)
 
 ## Generate clustered gold deposits
 func _generate_gold_deposits(count: int) -> void:
@@ -119,10 +124,15 @@ func _create_gold_cluster(center: Vector2i, size: int) -> void:
 ## @param tile_pos: Grid position (Vector2i)
 ## @return Dictionary: {success: bool, has_gold: bool, gold_amount: int}
 func dig_tile(tile_pos: Vector2i) -> Dictionary:
-	var tile_id: int = tilemap.get_cell_source_id(0, tile_pos)
+	var tile_source: int = tilemap.get_cell_source_id(0, tile_pos)
+	var tile_atlas: Vector2i = tilemap.get_cell_atlas_coords(0, tile_pos)
 
-	# Check if tile is diggable
-	if tile_id == TILE_EMPTY or tile_id == TILE_BEDROCK:
+	# Check if tile exists and is diggable
+	if tile_source == TILE_EMPTY:
+		return {success = false, has_gold = false, gold_amount = 0}
+
+	# Bedrock is not diggable (but this shouldn't happen often as it's deep)
+	if tile_atlas == TILE_BEDROCK_ATLAS:
 		return {success = false, has_gold = false, gold_amount = 0}
 
 	# Remove tile
@@ -163,6 +173,8 @@ func highlight_gold_tiles(positions: Array) -> void:
 # ============================================================================
 
 func _ready() -> void:
+	add_to_group("terrain")
+	print("[TerrainManager] Ready! Added to 'terrain' group")
 	EventBus.debug_mode_changed.connect(_on_debug_mode_changed)
 	EventBus.debug_reveal_gold.connect(_reveal_all_gold)
 
@@ -173,9 +185,17 @@ func _on_debug_mode_changed(enabled: bool) -> void:
 	queue_redraw()
 
 func _reveal_all_gold() -> void:
+	var all_positions: Array[Vector2i] = []
 	for pos in gold_deposits.keys():
 		gold_deposits[pos].revealed = true
+		all_positions.append(pos)
+
+	# Emit signal and highlight tiles (same as scanner)
+	EventBus.gold_detected.emit(all_positions)
+	highlight_gold_tiles(all_positions)
+
 	queue_redraw()
+	print("[Debug] Revealed all %d gold deposits" % all_positions.size())
 
 func _draw() -> void:
 	if not debug_mode:

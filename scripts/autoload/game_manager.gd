@@ -71,8 +71,15 @@ func transition_to_auction() -> void:
 func start_mining_session(plot: Resource) -> void:
 	current_plot = plot
 	current_state = GameState.MINING
-	EventBus.mining_started.emit(plot)
+	print("[GameManager] Starting mining session with plot: %s" % plot.plot_name)
 	get_tree().change_scene_to_file("res://scenes/mining/mining_scene.tscn")
+
+	# Wait for scene to load and all nodes to be ready
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame  # Extra frame for safety
+	print("[GameManager] Scene loaded, emitting mining_started signal")
+	EventBus.mining_started.emit(plot)
 
 ## Transition to round end summary
 func show_round_end(stats: Dictionary) -> void:

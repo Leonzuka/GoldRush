@@ -13,6 +13,9 @@ extends Control
 @onready var storage_bar: ProgressBar = $BottomBar/StorageBar
 @onready var scan_button: Button = $BottomBar/ScanButton
 
+# FPS counter (created programmatically)
+var fps_label: Label
+
 # ============================================================================
 # INITIALIZATION
 # ============================================================================
@@ -22,9 +25,28 @@ func _ready() -> void:
 	EventBus.resource_storage_changed.connect(_on_storage_changed)
 	EventBus.money_changed.connect(_on_money_changed)
 
+	# Create FPS counter
+	_create_fps_counter()
+
+	# Setup tooltips
+	_setup_tooltips()
+
 	# Initialize display
 	update_round_display()
 	update_money_display()
+
+## Setup tooltips for UI elements
+func _setup_tooltips() -> void:
+	scan_button.tooltip_text = "Detectar ouro próximo (Pressione SPACE)\nCooldown: 3 segundos"
+	storage_bar.tooltip_text = "Capacidade de armazenamento de ouro\nRetorne ao caminhão quando estiver cheio"
+
+## Create FPS counter label programmatically
+func _create_fps_counter() -> void:
+	fps_label = Label.new()
+	fps_label.name = "FPSLabel"
+	fps_label.position = Vector2(10, 10)
+	fps_label.add_theme_font_size_override("font_size", 14)
+	add_child(fps_label)
 
 # ============================================================================
 # UPDATES
@@ -37,8 +59,9 @@ func update_money_display() -> void:
 	money_label.text = "Money: $%d" % GameManager.player_money
 
 func _on_time_updated(time_remaining: float) -> void:
-	var minutes: int = int(time_remaining) / 60
-	var seconds: int = int(time_remaining) % 60
+	var total_seconds: int = int(time_remaining)
+	var minutes: int = total_seconds / 60
+	var seconds: int = total_seconds % 60
 	time_label.text = "Time: %02d:%02d" % [minutes, seconds]
 
 func _on_storage_changed(current: int, max_capacity: int) -> void:
@@ -54,6 +77,10 @@ func _on_money_changed(new_amount: int) -> void:
 # ============================================================================
 
 func _process(_delta: float) -> void:
+	# Update FPS counter
+	if fps_label:
+		fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
+
 	# Update scan button cooldown display
 	var scanner: Node = get_tree().get_first_node_in_group("scanner")
 	if scanner and scanner.has_method("get_cooldown_remaining"):

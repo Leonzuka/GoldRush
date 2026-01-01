@@ -27,3 +27,7 @@ script = ExtResource("2_drill")
 
 [node name="ScannerComponent" type="Node" parent="." groups=["scanner"]]
 script = ExtResource("3_scanner")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+enabled = true
+zoom = Vector2(1.5, 1.5)

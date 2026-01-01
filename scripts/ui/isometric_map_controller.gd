@@ -119,4 +119,3 @@ func refresh_plot_visuals(plot: PlotData) -> void:
 	var tile = plot_tiles.get(plot.grid_position)
 	if tile:
 		tile.update_visual_state()
-

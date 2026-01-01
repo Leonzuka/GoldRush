@@ -13,6 +13,7 @@ script = ExtResource("1_session")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(640, 360)
+enabled = false
 
 [node name="Terrain" parent="." instance=ExtResource("2_terrain")]
 

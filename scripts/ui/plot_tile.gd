@@ -60,6 +60,9 @@ func _ready() -> void:
 	_setup_geometry()
 	_setup_input()
 
+	# Load Gold Mine sprite (now using .jpeg extension)
+	_setup_mine_sprite()
+
 	if plot_data:
 		update_visual_state()
 		print("[PlotTile] Ready: " + plot_data.plot_name + " at position " + str(position))
@@ -90,6 +93,35 @@ func _process(_delta: float) -> void:
 		else:
 			print("[PlotTile] Mouse exited " + plot_data.plot_name)
 		update_visual_state()
+
+## Setup Gold Mine sprite to fill the isometric tile
+func _setup_mine_sprite() -> void:
+	var sprite_path = "res://assets/sprites/Gold_Mine.jpeg"
+	var texture = load(sprite_path)
+
+	if texture:
+		owner_flag.texture = texture
+
+		# Calculate scale to fill the isometric diamond
+		# Tile is 128x64 diamond, we want sprite to fill it
+		var tile_width = Config.ISO_TILE_WIDTH  # 128
+		var tile_height = Config.ISO_TILE_HEIGHT  # 64
+
+		# Get texture size
+		var tex_size = texture.get_size()
+
+		# Scale to fill the entire tile rectangle
+		# Multiply by 1.2 to make sprite fit nicely within the isometric space
+		var full_size = (tile_width + Config.ISO_TILE_DEPTH) * 1.2  # 160 * 1.2 = 192
+		var scale_factor = full_size / max(tex_size.x, tex_size.y)
+
+		owner_flag.scale = Vector2(scale_factor, scale_factor)
+		owner_flag.position = Vector2(0, Config.ISO_TILE_DEPTH / 2)  # Offset down to cover depth
+		owner_flag.visible = false  # Hidden until owned
+
+		print("[PlotTile] Gold Mine sprite loaded: scale=%.2f" % scale_factor)
+	else:
+		push_error("[PlotTile] Failed to load Gold_Mine.jpeg")
 
 ## Creates isometric diamond geometry for the tile
 func _setup_geometry() -> void:
@@ -174,13 +206,15 @@ func update_visual_state() -> void:
 			modulate = Color(0.6, 0.6, 0.7)
 			border_line.width = 2.0
 			border_line.default_color = Color(0.8, 0.3, 0.3)  # Red
-			owner_flag.visible = true  # Will be sprite in future
+			owner_flag.visible = true
+			owner_flag.modulate = Color(0.8, 0.3, 0.3, 0.8)  # Red tint for NPC
 
 		PlotData.OwnerType.PLAYER:
 			modulate = Color(0.7, 0.9, 1.2)
 			border_line.width = 3.0
 			border_line.default_color = Color(0.2, 0.6, 1.0)  # Blue
-			owner_flag.visible = false
+			owner_flag.visible = true
+			owner_flag.modulate = Color(0.2, 0.6, 1.0, 0.8)  # Blue tint for player
 
 func _on_area_input_event(_viewport, event, _shape_idx):
 	print("[PlotTile] Input event: %s" % event)
@@ -203,4 +237,3 @@ func _on_mouse_exited() -> void:
 	print("[PlotTile] Mouse exited")
 	is_hovered = false
 	update_visual_state()
-
