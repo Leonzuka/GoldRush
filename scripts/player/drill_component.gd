@@ -79,6 +79,7 @@ func attempt_drill(tile_pos: Vector2i, delta: float) -> void:
 	if drill_progress >= 1.0:
 		var result: Dictionary = terrain_manager.dig_tile(tile_pos)
 		if result.success:
+			_spawn_dig_dust(tile_pos)
 			if result.has_gold:
 				spawn_gold_nugget(tile_pos, result.gold_amount)
 
@@ -106,3 +107,27 @@ func spawn_gold_nugget(tile_pos: Vector2i, amount: int) -> void:
 		container.add_child(nugget)
 	else:
 		get_tree().root.add_child(nugget)
+
+# ============================================================================
+# EFFECTS
+# ============================================================================
+
+## Spawn dust particles at the dug tile position
+func _spawn_dig_dust(tile_pos: Vector2i) -> void:
+	var dust := CPUParticles2D.new()
+	dust.emitting = true
+	dust.amount = 12
+	dust.lifetime = 0.6
+	dust.one_shot = true
+	dust.explosiveness = 0.9
+	dust.direction = Vector2(0, -1)
+	dust.spread = 60.0
+	dust.initial_velocity_min = 20.0
+	dust.initial_velocity_max = 50.0
+	dust.gravity = Vector2(0, 40)
+	dust.scale_amount_min = 2.0
+	dust.scale_amount_max = 4.0
+	dust.color = Color(0.65, 0.5, 0.3, 0.8)
+	dust.global_position = terrain_manager.tile_to_world(tile_pos)
+	dust.finished.connect(dust.queue_free)
+	get_tree().root.add_child(dust)

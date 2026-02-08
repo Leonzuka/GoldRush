@@ -3,15 +3,12 @@
 Este arquivo organiza as próximas tarefas e melhorias do projeto GoldRush.
 
 ## 🔴 Tarefas Imediatas
-
 - [ ] Testar sistema de leilão com múltiplos NPCs
 - [ ] Validar balanceamento de dificuldade dos plots
-- [ ] F3 não está mostrando ouro
-- [ ] W faz o player voar.
-- [ ] Não estou encontrando ouro e o Scan não está funcionando
+- Criar vários claude.md por seção de código.
+- Add pular ou escada no para o player subir?
 
 ## 🟡 Phase 2: Sistema de Mercado
-
 - [ ] Implementar precificação dinâmica do ouro
 - [ ] Criar gráfico de flutuação de preços
 - [ ] Adicionar múltiplos compradores (Banco, Joalheiro, Mercado Negro)
@@ -19,7 +16,6 @@ Este arquivo organiza as próximas tarefas e melhorias do projeto GoldRush.
 - [ ] Criar eventos que afetam o mercado (descobertas, escassez, etc)
 
 ## 🟢 Phase 3: Sistema de Upgrades
-
 - [ ] Criar cena da loja entre rounds
 - [ ] Implementar upgrade de velocidade da broca
 - [ ] Implementar upgrade de capacidade de armazenamento
@@ -32,9 +28,8 @@ Este arquivo organiza as próximas tarefas e melhorias do projeto GoldRush.
 
 ### Visual
 - [ ] Shader de escavação suave (já existe em `shaders/terrain_dig.gdshader`)
-- [ ] Efeitos de partículas (poeira ao cavar)
+- [x] Efeitos de partículas (poeira ao cavar)
 - [ ] Efeitos de partículas (faíscas ao minerar)
-- [ ] Brilho dourado nas pepitas de ouro
 - [ ] Assets artísticos pintados à mão
 - [ ] Animações de transição entre telas
 
@@ -52,8 +47,6 @@ Este arquivo organiza as próximas tarefas e melhorias do projeto GoldRush.
 - [ ] Tooltips explicativos
 - [ ] Feedback visual ao passar mouse sobre plots
 - [ ] Animação de contagem de dinheiro
-- [ ] Tela de pausa durante mineração
-- [ ] Configurações (volume, fullscreen, etc)
 
 ## 🟣 Phase 5: Expansão de Conteúdo
 
@@ -88,7 +81,6 @@ Este arquivo organiza as próximas tarefas e melhorias do projeto GoldRush.
 
 ## 🐛 Bugs Conhecidos
 
-- [ ] Nenhum bug crítico registrado no momento
 
 ## 📝 Ideias Não Priorizadas
 

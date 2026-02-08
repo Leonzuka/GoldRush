@@ -24,6 +24,7 @@ var round_number: int = 1
 var current_plot: Resource = null  # PlotData
 var total_gold_collected: int = 0
 var session_history: Array[Dictionary] = []  # Stats per round
+var debug_mode_enabled: bool = false
 
 # ============================================================================
 # INITIALIZATION
@@ -37,8 +38,9 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	# Debug mode toggle
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F12:
-		var debug_mode: bool = !ProjectSettings.get_setting("debug/gdscript/warnings/enable", false)
-		EventBus.debug_mode_changed.emit(debug_mode)
+		debug_mode_enabled = !debug_mode_enabled
+		EventBus.debug_mode_changed.emit(debug_mode_enabled)
+		print("[Debug] Mode: %s" % ("ON" if debug_mode_enabled else "OFF"))
 
 	# Cheat: Add money (dev only)
 	if OS.is_debug_build() and event is InputEventKey and event.pressed:

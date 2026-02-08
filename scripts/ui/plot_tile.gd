@@ -102,21 +102,14 @@ func _setup_mine_sprite() -> void:
 	if texture:
 		owner_flag.texture = texture
 
-		# Calculate scale to fill the isometric diamond
-		# Tile is 128x64 diamond, we want sprite to fill it
-		var tile_width = Config.ISO_TILE_WIDTH  # 128
-		var tile_height = Config.ISO_TILE_HEIGHT  # 64
-
-		# Get texture size
+		# Scale sprite to fit inside the isometric diamond (128x64)
 		var tex_size = texture.get_size()
-
-		# Scale to fill the entire tile rectangle
-		# Multiply by 1.2 to make sprite fit nicely within the isometric space
-		var full_size = (tile_width + Config.ISO_TILE_DEPTH) * 1.2  # 160 * 1.2 = 192
-		var scale_factor = full_size / max(tex_size.x, tex_size.y)
+		var scale_x = Config.ISO_TILE_WIDTH * 0.7 / tex_size.x
+		var scale_y = Config.ISO_TILE_HEIGHT * 0.9 / tex_size.y
+		var scale_factor = min(scale_x, scale_y)
 
 		owner_flag.scale = Vector2(scale_factor, scale_factor)
-		owner_flag.position = Vector2(0, Config.ISO_TILE_DEPTH / 2)  # Offset down to cover depth
+		owner_flag.position = Vector2.ZERO  # Centered on the diamond
 		owner_flag.visible = false  # Hidden until owned
 
 		print("[PlotTile] Gold Mine sprite loaded: scale=%.2f" % scale_factor)

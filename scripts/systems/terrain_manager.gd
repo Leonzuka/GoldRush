@@ -25,6 +25,11 @@ class_name TerrainManager
 ## Key: Vector2i (tile position), Value: Dictionary {amount, richness, revealed}
 var gold_deposits: Dictionary = {}
 
+## Gold indicator visuals for scanner feedback
+## Key: Vector2i (tile position), Value: Node2D (indicator)
+var gold_indicators: Dictionary = {}
+var indicator_container: Node2D
+
 ## Tile IDs (matches tileset configuration)
 ## Using atlas coordinates (x, y) for tiles WITH collision shapes
 const TILE_EMPTY: int = -1
@@ -86,9 +91,11 @@ func _generate_gold_deposits(count: int) -> void:
 	var clusters: int = max(1, int(count / 5.0))  # 5 deposits per cluster average
 
 	for i in range(clusters):
+		# Weighted depth: ~40% shallow (rows 3-15), ~60% deeper (rows 15+)
+		var min_y: int = 3 if randf() < 0.4 else 15
 		var cluster_center: Vector2i = Vector2i(
 			randi_range(5, terrain_width - 5),
-			randi_range(10, terrain_height - 10)  # Avoid surface
+			randi_range(min_y, terrain_height - 10)
 		)
 
 		var cluster_size: int = randi_range(3, 8)
@@ -146,6 +153,11 @@ func dig_tile(tile_pos: Vector2i) -> Dictionary:
 		result.gold_amount = deposit.amount
 		gold_deposits.erase(tile_pos)
 
+	# Remove gold indicator if exists
+	if gold_indicators.has(tile_pos):
+		gold_indicators[tile_pos].queue_free()
+		gold_indicators.erase(tile_pos)
+
 	EventBus.tile_dug.emit(tile_pos)
 	return result
 
@@ -164,9 +176,19 @@ func tile_to_world(tile_pos: Vector2i) -> Vector2:
 ## Highlight revealed gold deposits (visual feedback)
 func highlight_gold_tiles(positions: Array) -> void:
 	for pos in positions:
-		if pos is Vector2i:
-			# Yellow tint for revealed gold
-			tilemap.set_cell(0, pos, 0, Vector2i(tilemap.get_cell_atlas_coords(0, pos)), 0)
+		if pos is Vector2i and not gold_indicators.has(pos):
+			var indicator := ColorRect.new()
+			indicator.size = Vector2(Config.TILE_SIZE, Config.TILE_SIZE)
+			indicator.color = Color(1.0, 0.84, 0.0, 0.5)  # Golden semi-transparent
+			indicator.position = tilemap.map_to_local(pos) - Vector2(Config.TILE_SIZE / 2.0, Config.TILE_SIZE / 2.0)
+			indicator.z_index = 5
+			indicator_container.add_child(indicator)
+			gold_indicators[pos] = indicator
+
+			# Pulsating animation
+			var tween := create_tween().set_loops()
+			tween.tween_property(indicator, "color:a", 0.2, 0.5)
+			tween.tween_property(indicator, "color:a", 0.5, 0.5)
 
 # ============================================================================
 # DEBUG
@@ -177,6 +199,11 @@ func _ready() -> void:
 	print("[TerrainManager] Ready! Added to 'terrain' group")
 	EventBus.debug_mode_changed.connect(_on_debug_mode_changed)
 	EventBus.debug_reveal_gold.connect(_reveal_all_gold)
+
+	# Create container for gold indicators
+	indicator_container = Node2D.new()
+	indicator_container.name = "GoldIndicators"
+	add_child(indicator_container)
 
 var debug_mode: bool = false
 

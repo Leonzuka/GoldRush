@@ -88,6 +88,13 @@ func perform_scan() -> Array:
 	EventBus.gold_detected.emit(detected_deposits)
 	terrain_manager.highlight_gold_tiles(detected_deposits)
 
+	# Visual scan effect
+	var scan_effect := Node2D.new()
+	scan_effect.set_script(preload("res://scripts/effects/scan_effect.gd"))
+	scan_effect.max_radius = scan_radius
+	scan_effect.global_position = player.global_position
+	get_tree().current_scene.add_child(scan_effect)
+
 	print("[Scanner] Detected %d deposits" % detected_deposits.size())
 	return detected_deposits
 

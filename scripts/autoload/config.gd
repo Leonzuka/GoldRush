@@ -35,10 +35,10 @@ const TERRAIN_WIDTH: int = 100         # Tiles
 const TERRAIN_HEIGHT: int = 50         # Tiles
 const TILE_SIZE: int = 16              # Pixels
 
-const MIN_GOLD_DEPOSITS: int = 15
-const MAX_GOLD_DEPOSITS: int = 30
-const MIN_GOLD_AMOUNT: int = 10
-const MAX_GOLD_AMOUNT: int = 50
+const MIN_GOLD_DEPOSITS: int = 25
+const MAX_GOLD_DEPOSITS: int = 50
+const MIN_GOLD_AMOUNT: int = 15
+const MAX_GOLD_AMOUNT: int = 60
 
 # ============================================================================
 # AUCTION CONSTANTS
