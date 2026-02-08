@@ -16,6 +16,11 @@ extends Control
 # FPS counter (created programmatically)
 var fps_label: Label
 
+# Money counting animation
+var displayed_money: int = 0
+var target_money: int = 0
+var money_tween: Tween
+
 # ============================================================================
 # INITIALIZATION
 # ============================================================================
@@ -56,7 +61,9 @@ func update_round_display() -> void:
 	round_label.text = "Round: %d" % GameManager.round_number
 
 func update_money_display() -> void:
-	money_label.text = "Money: $%d" % GameManager.player_money
+	displayed_money = GameManager.player_money
+	target_money = displayed_money
+	money_label.text = "Money: $%d" % displayed_money
 
 func _on_time_updated(time_remaining: float) -> void:
 	var total_seconds: int = int(time_remaining)
@@ -70,7 +77,7 @@ func _on_storage_changed(current: int, max_capacity: int) -> void:
 	storage_bar.value = current
 
 func _on_money_changed(new_amount: int) -> void:
-	money_label.text = "Money: $%d" % new_amount
+	_animate_money_change(new_amount)
 
 # ============================================================================
 # SCANNER BUTTON
@@ -91,3 +98,44 @@ func _process(_delta: float) -> void:
 		else:
 			scan_button.text = "SCAN [SPACE]"
 			scan_button.disabled = false
+
+# ============================================================================
+# MONEY ANIMATION
+# ============================================================================
+
+## Animate money counter from current displayed value to new target
+func _animate_money_change(new_amount: int) -> void:
+	var old_amount := displayed_money
+	target_money = new_amount
+	var gained := new_amount > old_amount
+
+	# Kill previous tween if still running
+	if money_tween and money_tween.is_valid():
+		money_tween.kill()
+		displayed_money = target_money
+
+	# Duration scales with difference (min 0.3s, max 1.2s)
+	var diff := absf(float(new_amount - old_amount))
+	var duration := clampf(diff / 500.0, 0.3, 1.2)
+
+	money_tween = create_tween()
+	money_tween.tween_method(_update_money_text, float(old_amount), float(new_amount), duration)\
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+
+	# Color flash: green for gain, red for loss
+	var flash_color := Color(0.3, 1.0, 0.3) if gained else Color(1.0, 0.3, 0.3)
+	var scale_tween := create_tween()
+	scale_tween.tween_property(money_label, "modulate", flash_color, 0.1)
+	scale_tween.tween_property(money_label, "modulate", Color.WHITE, 0.4)
+
+	# Scale punch effect
+	var punch_tween := create_tween()
+	punch_tween.tween_property(money_label, "scale", Vector2(1.2, 1.2), 0.1)\
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	punch_tween.tween_property(money_label, "scale", Vector2.ONE, 0.25)\
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
+
+## Callback for money counting tween - updates label each frame
+func _update_money_text(value: float) -> void:
+	displayed_money = int(value)
+	money_label.text = "Money: $%d" % displayed_money

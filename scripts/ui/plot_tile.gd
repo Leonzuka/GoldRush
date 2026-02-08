@@ -15,12 +15,16 @@ signal hovered(plot_tile: PlotTile)
 
 @onready var ground_polygon: Polygon2D = $GroundPolygon
 @onready var depth_polygon: Polygon2D = $DepthPolygon
+@onready var left_depth_polygon: Polygon2D = $LeftDepthPolygon
+@onready var depth_border_line: Line2D = $DepthBorderLine
 @onready var border_line: Line2D = $BorderLine
 @onready var owner_flag: Sprite2D = $OwnerFlag
 @onready var area: Area2D = $Area2D
 @onready var collision: CollisionPolygon2D = $Area2D/CollisionPolygon2D
 
 var is_hovered: bool = false
+var hover_tween: Tween
+var pulse_tween: Tween
 
 func _input(event: InputEvent) -> void:
 	if not plot_data:
@@ -142,7 +146,24 @@ func _setup_geometry() -> void:
 		Vector2(0, hh + depth)       # Bottom point + depth
 	])
 
-	# Border outline
+	# Depth face (2.5D side effect) - Left side
+	left_depth_polygon.polygon = PackedVector2Array([
+		Vector2(-hw, 0),             # Left point of diamond
+		Vector2(0, hh),              # Bottom point of diamond
+		Vector2(0, hh + depth),      # Bottom point + depth
+		Vector2(-hw, 0 + depth)      # Left point + depth
+	])
+
+	# Border outline for depth sides
+	depth_border_line.points = PackedVector2Array([
+		Vector2(-hw, 0),             # Left point
+		Vector2(-hw, 0 + depth),     # Left point + depth
+		Vector2(0, hh + depth),      # Bottom point + depth
+		Vector2(hw, 0 + depth),      # Right point + depth
+		Vector2(hw, 0)               # Right point
+	])
+
+	# Border outline (top diamond)
 	border_line.points = PackedVector2Array([
 		Vector2(0, -hh),
 		Vector2(hw, 0),
@@ -172,42 +193,72 @@ func _setup_input() -> void:
 ## Updates visual appearance based on plot state
 func update_visual_state() -> void:
 	if not plot_data:
-		print("[PlotTile] update_visual_state called but plot_data is null!")
 		return
 
 	# Base color from richness
 	var base_color = plot_data.get_richness_color()
 	ground_polygon.color = base_color
 	depth_polygon.color = base_color.darkened(0.4)
+	left_depth_polygon.color = base_color.darkened(0.55)
 
-	print("[PlotTile] Visual updated for " + plot_data.plot_name + ": color=" + str(base_color) + ", owner=" + PlotData.OwnerType.keys()[plot_data.owner_type])
+	# Kill any running hover tweens
+	if hover_tween and hover_tween.is_valid():
+		hover_tween.kill()
+	if pulse_tween and pulse_tween.is_valid():
+		pulse_tween.kill()
 
 	# State-based modulation
 	match plot_data.owner_type:
 		PlotData.OwnerType.AVAILABLE:
 			if is_hovered:
-				modulate = Color(1.15, 1.15, 1.15)
-				border_line.width = 2.5
-				border_line.default_color = Color.WHITE
+				_animate_hover_in()
 			else:
-				modulate = Color.WHITE
-				border_line.width = 1.5
-				border_line.default_color = Color(0.3, 0.3, 0.3)
+				_animate_hover_out()
 			owner_flag.visible = false
 
 		PlotData.OwnerType.NPC:
 			modulate = Color(0.6, 0.6, 0.7)
+			scale = Vector2.ONE
 			border_line.width = 2.0
-			border_line.default_color = Color(0.8, 0.3, 0.3)  # Red
+			border_line.default_color = Color(0.8, 0.3, 0.3)
+			depth_border_line.width = 2.0
+			depth_border_line.default_color = Color(0.8, 0.3, 0.3)
 			owner_flag.visible = true
-			owner_flag.modulate = Color(0.8, 0.3, 0.3, 0.8)  # Red tint for NPC
+			owner_flag.modulate = Color(0.8, 0.3, 0.3, 0.8)
 
 		PlotData.OwnerType.PLAYER:
 			modulate = Color(0.7, 0.9, 1.2)
+			scale = Vector2.ONE
 			border_line.width = 3.0
-			border_line.default_color = Color(0.2, 0.6, 1.0)  # Blue
+			border_line.default_color = Color(0.2, 0.6, 1.0)
+			depth_border_line.width = 3.0
+			depth_border_line.default_color = Color(0.2, 0.6, 1.0)
 			owner_flag.visible = true
-			owner_flag.modulate = Color(0.2, 0.6, 1.0, 0.8)  # Blue tint for player
+			owner_flag.modulate = Color(0.2, 0.6, 1.0, 0.8)
+
+## Animate tile when mouse hovers over it
+func _animate_hover_in() -> void:
+	hover_tween = create_tween().set_parallel(true)
+	hover_tween.tween_property(self, "scale", Vector2(1.08, 1.08), 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	hover_tween.tween_property(self, "modulate", Color(1.25, 1.2, 1.1), 0.15)
+	border_line.width = 3.0
+	border_line.default_color = Color(1.0, 0.9, 0.5)
+	depth_border_line.width = 3.0
+	depth_border_line.default_color = Color(1.0, 0.9, 0.5)
+
+	# Start pulsating border glow
+	pulse_tween = create_tween().set_loops()
+	pulse_tween.tween_property(border_line, "default_color", Color(1.0, 0.85, 0.3), 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	pulse_tween.tween_property(border_line, "default_color", Color(1.0, 0.95, 0.7), 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+## Animate tile back to normal when mouse leaves
+func _animate_hover_out() -> void:
+	hover_tween = create_tween().set_parallel(true)
+	hover_tween.tween_property(self, "scale", Vector2.ONE, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	hover_tween.tween_property(self, "modulate", Color.WHITE, 0.2)
+	hover_tween.tween_property(border_line, "width", 1.5, 0.2)
+	hover_tween.tween_property(border_line, "default_color", Color(0.3, 0.3, 0.3), 0.2)
+	hover_tween.tween_property(depth_border_line, "default_color", Color(0.3, 0.3, 0.3), 0.2)
 
 func _on_area_input_event(_viewport, event, _shape_idx):
 	print("[PlotTile] Input event: %s" % event)

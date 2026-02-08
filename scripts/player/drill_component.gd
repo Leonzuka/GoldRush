@@ -81,6 +81,7 @@ func attempt_drill(tile_pos: Vector2i, delta: float) -> void:
 		if result.success:
 			_spawn_dig_dust(tile_pos)
 			if result.has_gold:
+				_spawn_gold_sparks(tile_pos)
 				spawn_gold_nugget(tile_pos, result.gold_amount)
 
 		drill_progress = 0.0
@@ -131,3 +132,33 @@ func _spawn_dig_dust(tile_pos: Vector2i) -> void:
 	dust.global_position = terrain_manager.tile_to_world(tile_pos)
 	dust.finished.connect(dust.queue_free)
 	get_tree().root.add_child(dust)
+
+## Spawn golden spark particles when gold is found
+func _spawn_gold_sparks(tile_pos: Vector2i) -> void:
+	var sparks := CPUParticles2D.new()
+	sparks.emitting = true
+	sparks.amount = 16
+	sparks.lifetime = 0.8
+	sparks.one_shot = true
+	sparks.explosiveness = 0.95
+	sparks.direction = Vector2(0, -1)
+	sparks.spread = 180.0
+	sparks.initial_velocity_min = 40.0
+	sparks.initial_velocity_max = 90.0
+	sparks.gravity = Vector2(0, 60)
+	sparks.scale_amount_min = 1.0
+	sparks.scale_amount_max = 2.5
+	sparks.color_ramp = _create_gold_gradient()
+	sparks.global_position = terrain_manager.tile_to_world(tile_pos)
+	sparks.finished.connect(sparks.queue_free)
+	get_tree().root.add_child(sparks)
+
+## Create a gold-colored gradient for spark particles
+func _create_gold_gradient() -> Gradient:
+	var gradient := Gradient.new()
+	gradient.set_offset(0, 0.0)
+	gradient.set_color(0, Color(1.0, 0.95, 0.4, 1.0))  # Bright gold
+	gradient.add_point(0.4, Color(1.0, 0.75, 0.1, 0.9))  # Rich gold
+	gradient.set_offset(2, 1.0)
+	gradient.set_color(2, Color(0.9, 0.5, 0.0, 0.0))  # Fade to transparent orange
+	return gradient

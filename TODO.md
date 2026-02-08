@@ -1,91 +1,155 @@
 # GoldRush - TODO List
 
-Este arquivo organiza as próximas tarefas e melhorias do projeto GoldRush.
+Este arquivo organiza as proximas tarefas e melhorias do projeto.
 
-## 🔴 Tarefas Imediatas
-- [ ] Testar sistema de leilão com múltiplos NPCs
+## 🔴 Tarefas Imediatas (Sprint Atual)
+
+### Gameplay Core
+- [ ] Add escada ou pulo para o player subir (sem isso o jogador fica preso apos descer)
+- [ ] Testar sistema de leilao com multiplos NPCs
 - [ ] Validar balanceamento de dificuldade dos plots
-- Criar vários claude.md por seção de código.
-- Add pular ou escada no para o player subir?
+- [ ] Add um PinPoint com espaco para uma foto do bot durante o Leilao
+
+### Qualidade de Codigo
+- [ ] Criar CLAUDE.md por secao de codigo (auction/, mining/, player/, etc)
+- [ ] Remover prints de debug excessivos (plot_tile.gd, isometric_map_controller.gd)
+- [ ] Adicionar guards para null em `_process()` do plot_tile.gd (evitar checks todo frame)
+
+### Balanceamento
+- [ ] Ajustar DRILL_REACH (32px pode ser muito curto para tiles de 16px)
+- [ ] Testar curva de dificuldade: rounds 1-5 devem ser progressivamente mais dificeis
+- [ ] Validar que 25-50 depositos por plot gera gameplay de ~2 minutos satisfatorio
+
+---
 
 ## 🟡 Phase 2: Sistema de Mercado
-- [ ] Implementar precificação dinâmica do ouro
-- [ ] Criar gráfico de flutuação de preços
-- [ ] Adicionar múltiplos compradores (Banco, Joalheiro, Mercado Negro)
-- [ ] Implementar algoritmo de random walk para variação de preços
-- [ ] Criar eventos que afetam o mercado (descobertas, escassez, etc)
+
+### Precificacao Dinamica
+- [ ] Criar classe `MarketSystem` (autoload) com preco base do ouro
+- [ ] Implementar algoritmo de random walk para variacao de precos entre rounds
+- [ ] Criar HUD de preco do ouro no menu principal e tela de leilao
+- [ ] Criar grafico de flutuacao de precos (historico dos ultimos N rounds)
+
+### Compradores
+- [ ] Adicionar multiplos compradores (Banco, Joalheiro, Mercado Negro)
+- [ ] Cada comprador com multiplicador de preco diferente e preferencias
+- [ ] Tela de venda pos-mineracao (escolher para quem vender)
+
+### Eventos de Mercado
+- [ ] Criar eventos que afetam o mercado (descobertas, escassez, inflacao)
+- [ ] Notificacao visual quando evento de mercado ocorre
+- [ ] Sistema de probabilidade de eventos baseado no round atual
+
+---
 
 ## 🟢 Phase 3: Sistema de Upgrades
-- [ ] Criar cena da loja entre rounds
-- [ ] Implementar upgrade de velocidade da broca
-- [ ] Implementar upgrade de capacidade de armazenamento
-- [ ] Implementar upgrade de raio do scanner
-- [ ] Adicionar upgrade de duração do tempo de mineração
-- [ ] Criar fórmula de escalonamento de custos
-- [ ] Interface de preview dos upgrades
+
+### Loja
+- [ ] Criar cena da loja entre rounds (shop_scene.tscn)
+- [ ] Interface de preview dos upgrades com custo e efeito
+- [ ] Criar formula de escalonamento de custos (exponencial ou linear?)
+
+### Upgrades Disponiveis
+- [ ] Upgrade de velocidade da broca (DRILL_SPEED)
+- [ ] Upgrade de capacidade de armazenamento (STORAGE_CAPACITY)
+- [ ] Upgrade de raio do scanner (SCAN_RADIUS)
+- [ ] Upgrade de duracao do tempo de mineracao (ROUND_TIME_LIMIT)
+- [ ] Upgrade de alcance da broca (DRILL_REACH)
+- [ ] Upgrade de cooldown do scanner (SCAN_COOLDOWN)
+
+### Persistencia
+- [ ] Salvar upgrades comprados entre sessoes (save/load)
+- [ ] Mostrar upgrades ativos no HUD durante mineracao
+
+---
 
 ## 🔵 Phase 4: Polish e Refinamento
 
 ### Visual
-- [ ] Shader de escavação suave (já existe em `shaders/terrain_dig.gdshader`)
-- [x] Efeitos de partículas (poeira ao cavar)
-- [ ] Efeitos de partículas (faíscas ao minerar)
-- [ ] Assets artísticos pintados à mão
-- [ ] Animações de transição entre telas
+- [ ] Shader de escavacao suave (ja existe em `shaders/terrain_dig.gdshader`)
+- [ ] Assets artisticos pintados a mao (substituir placeholders)
+- [ ] Animacoes de transicao entre telas (fade, slide)
+- [ ] Indicador visual de progresso de drill (barra de progresso no tile)
+- [ ] Efeito de particulas ao cavar bedrock (faiscas de impacto)
+- [ ] Parallax background na cena de mineracao (ceu, nuvens)
+- [ ] Melhorar sprite do Gold Nugget (atual e um circulo com glow)
 
 ### Audio
-- [ ] Sons de escavação
-- [ ] Som de coleta de ouro
-- [ ] Som do scanner
-- [ ] Música de fundo (menu)
-- [ ] Música de fundo (leilão)
-- [ ] Música de fundo (mineração)
-- [ ] Sons de interface (cliques, transições)
+- [ ] Sons de escavacao (dirt vs stone, variacoes)
+- [ ] Som de coleta de ouro (coin pickup satisfatorio)
+- [ ] Som do scanner (ping/sonar)
+- [ ] Musica de fundo (menu) - loop ambiente
+- [ ] Musica de fundo (leilao) - tensao crescente
+- [ ] Musica de fundo (mineracao) - ritmo exploratorio
+- [ ] Sons de interface (cliques, transicoes, hover)
+- [ ] Som de "storage full" warning
 
 ### UX
-- [ ] Tutorial interativo no primeiro round
-- [ ] Tooltips explicativos
-- [ ] Feedback visual ao passar mouse sobre plots
-- [ ] Animação de contagem de dinheiro
+- [ ] Tutorial interativo no primeiro round (highlight areas, setas guia)
+- [ ] Tooltips explicativos em todos os botoes
+- [ ] Feedback visual quando drill esta fora de alcance
+- [ ] Minimap mostrando areas ja exploradas
+- [ ] Indicador de direcao para ouro detectado (seta na borda da tela)
 
-## 🟣 Phase 5: Expansão de Conteúdo
+---
+
+## 🟣 Phase 5: Expansao de Conteudo
 
 ### Eventos Especiais
 - [ ] Gold Rush (ouro temporariamente mais valioso)
-- [ ] Desmoronamento (área do mapa fica inacessível)
-- [ ] Descoberta arqueológica (bônus de valor)
+- [ ] Desmoronamento (area do mapa fica inacessivel)
+- [ ] Descoberta arqueologica (bonus de valor)
 - [ ] Tempestade (dificulta movimento)
+- [ ] Veio de Ouro (deposito gigante raro com 200+ ouro)
 
-### NPCs e Competição
-- [ ] NPCs mineradores rivais no mapa
-- [ ] Sistema de sabotagem/interação com rivais
-- [ ] Perfis de personalidade dos NPCs
+### NPCs e Competicao
+- [ ] NPCs mineradores rivais no mapa (disputam ouro em tempo real)
+- [ ] Sistema de sabotagem/interacao com rivais
+- [ ] Perfis de personalidade dos NPCs (agressivo, conservador, esperto)
+- [ ] NPCs com estrategias de leilao visiveis (tells/bluffs)
 
 ### Modos de Jogo
-- [ ] Modo história com narrativa
-- [ ] Modo endless (sem limite de rounds)
-- [ ] Modo desafio (objetivos específicos)
-- [ ] Multiplayer local no leilão
+- [ ] Modo historia com narrativa (cutscenes simples entre rounds)
+- [ ] Modo endless (sem limite de rounds, dificuldade crescente)
+- [ ] Modo desafio (objetivos especificos: "colete 300 ouro em 60s")
+- [ ] Multiplayer local no leilao (2-4 jogadores)
+
+---
 
 ## 💡 Nice to Have (Baixa Prioridade)
 
 - [ ] Sistema de conquistas/achievements
 - [ ] Placar global (leaderboard)
-- [ ] Estatísticas detalhadas (gráficos de performance)
-- [ ] Modo sandbox (recursos infinitos)
+- [ ] Estatisticas detalhadas (graficos de performance por round)
+- [ ] Modo sandbox (recursos infinitos, sem timer)
 - [ ] Editor de mapas customizados
 - [ ] Steam Workshop integration
-- [ ] Localização (PT-BR, EN, ES)
-- [ ] Controller support
-- [ ] Mobile port
+- [ ] Localizacao (PT-BR, EN, ES)
+- [ ] Controller support (gamepad mapping)
+- [ ] Mobile port (touch controls)
+- [ ] Sistema de save/load completo (continuar de onde parou)
+- [ ] Settings persistentes (volume, resolucao, fullscreen)
+
+---
 
 ## 🐛 Bugs Conhecidos
 
+- [x] ~~Ao pegar 2-3 ouros o jogo terminava~~ (STORAGE_CAPACITY: 100 -> 500)
+- [x] ~~A lateral do slot do leilao nao renderizava~~ (Adicionado LeftDepthPolygon + DepthBorderLine)
+- [ ] Verificar se gold_nugget fica preso em tiles solidos ao se mover em direcao ao player
+- [ ] Scanner cooldown visual no HUD depende de encontrar node "scanner" por grupo (fragil)
+- [ ] `_on_area_input_event` em plot_tile.gd pode conflitar com `_input` (duplo click handling)
 
-## 📝 Ideias Não Priorizadas
 
-- Sistema de contratos (objetivos opcionais com recompensas)
-- Sistema de reputação com os compradores
-- Minigames durante o leilão
-- Customização visual do personagem
-- Ferramentas especiais (dinamite, aspirador de ouro, etc)
+## 📝 Ideias Nao Priorizadas
+
+- Sistema de contratos (objetivos opcionais com recompensas: "ache 5 depositos em 30s")
+- Sistema de reputacao com os compradores (vender mais para um = melhores precos)
+- Minigames durante o leilao (queda de braco, dado, etc)
+- Customizacao visual do personagem (chapeus, picaretas, roupas)
+- Ferramentas especiais (dinamite abre 3x3, aspirador de ouro coleta a distancia)
+- Sistema de mapa mundial (diferentes regioes com biomas e recursos unicos)
+- Clima dinamico que afeta mineracao (chuva = lama escorregadia, sol = sede)
+- Sistema de fadiga do player (precisa descansar apos X minutos)
+- Mercado negro com itens raros e ilegais (risco/recompensa)
+- Jornal local com noticias que dao dicas de onde minerar

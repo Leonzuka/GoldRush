@@ -16,6 +16,17 @@ z_index = 0
 color = Color(0.4, 0.3, 0.2, 1)
 antialiased = true
 
+[node name="LeftDepthPolygon" type="Polygon2D" parent="."]
+z_index = 0
+color = Color(0.35, 0.25, 0.15, 1)
+antialiased = true
+
+[node name="DepthBorderLine" type="Line2D" parent="."]
+z_index = 2
+width = 1.5
+default_color = Color(0.3, 0.3, 0.3, 1)
+antialiased = true
+
 [node name="BorderLine" type="Line2D" parent="."]
 z_index = 2
 width = 1.5

@@ -24,6 +24,8 @@ extends Control
 
 var auction_system: AuctionSystem
 var selected_plot: PlotData = null
+var money_tween: Tween
+var displayed_money: int = 0
 
 # ============================================================================
 # INITIALIZATION
@@ -44,7 +46,8 @@ func _ready() -> void:
 
 	# Update UI initial state
 	title_label.text = "Leilão de Terras - Rodada %d" % GameManager.round_number
-	money_label.text = "Orçamento: $%d" % GameManager.player_money
+	displayed_money = GameManager.player_money
+	money_label.text = "Orçamento: $%d" % displayed_money
 	info_panel.visible = false
 
 	# CRITICAL: Wait for IsometricMapController to be ready and connected
@@ -119,7 +122,30 @@ func _on_bid_button_pressed() -> void:
 # ============================================================================
 
 func _on_money_changed(new_amount: int) -> void:
-	money_label.text = "Orçamento: $%d" % new_amount
+	_animate_money_change(new_amount)
+
+## Animate money counter with counting effect and color flash
+func _animate_money_change(new_amount: int) -> void:
+	var old_amount := displayed_money
+	var gained := new_amount > old_amount
+
+	if money_tween and money_tween.is_valid():
+		money_tween.kill()
+
+	var diff := absf(float(new_amount - old_amount))
+	var duration := clampf(diff / 500.0, 0.3, 1.0)
+
+	money_tween = create_tween()
+	money_tween.tween_method(func(v: float):
+		displayed_money = int(v)
+		money_label.text = "Orçamento: $%d" % displayed_money
+	, float(old_amount), float(new_amount), duration)\
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+
+	var flash_color := Color(0.3, 1.0, 0.3) if gained else Color(1.0, 0.3, 0.3)
+	var color_tween := create_tween()
+	color_tween.tween_property(money_label, "modulate", flash_color, 0.1)
+	color_tween.tween_property(money_label, "modulate", Color.WHITE, 0.4)
 
 func _on_npc_claimed_plot(plot: PlotData, npc_name: String) -> void:
 	"""Visual feedback when NPC claims a plot"""
