@@ -36,6 +36,7 @@ buses/2/send="Master"
 
 [autoload]
 
+SceneTransition="*res://scripts/autoload/scene_transition.gd"
 GameManager="*res://scripts/autoload/game_manager.gd"
 EventBus="*res://scripts/autoload/event_bus.gd"
 Config="*res://scripts/autoload/config.gd"

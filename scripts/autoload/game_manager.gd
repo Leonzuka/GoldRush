@@ -70,22 +70,29 @@ func start_new_game() -> void:
 ## Transition to auction phase
 func transition_to_auction() -> void:
 	current_state = GameState.AUCTION
+	await SceneTransition.transition_out(SceneTransition.Type.FADE)
 	EventBus.auction_started.emit()
 	get_tree().change_scene_to_file("res://scenes/auction/auction.tscn")
+	await get_tree().process_frame
+	SceneTransition.transition_in(SceneTransition.Type.FADE)
 
 ## Start mining session with won plot
 func start_mining_session(plot: Resource) -> void:
 	current_plot = plot
 	current_state = GameState.MINING
 	print("[GameManager] Starting mining session with plot: %s" % plot.plot_name)
+
+	await SceneTransition.transition_out(SceneTransition.Type.FADE)
 	get_tree().change_scene_to_file("res://scenes/mining/mining_scene.tscn")
 
-	# Wait for scene to load and all nodes to be ready
+	# Wait for scene to load and all nodes to be ready (3 frames minimum)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	await get_tree().process_frame  # Extra frame for safety
 	print("[GameManager] Scene loaded, emitting mining_started signal")
 	EventBus.mining_started.emit(plot)
+
+	SceneTransition.transition_in(SceneTransition.Type.FADE)
 
 ## Transition to round end summary
 func show_round_end(stats: Dictionary) -> void:
@@ -158,4 +165,7 @@ func game_over() -> void:
 
 	# Return to main menu
 	await get_tree().create_timer(3.0).timeout
+	await SceneTransition.transition_out(SceneTransition.Type.FADE)
 	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+	await get_tree().process_frame
+	SceneTransition.transition_in(SceneTransition.Type.FADE)

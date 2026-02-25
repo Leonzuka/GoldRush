@@ -37,7 +37,9 @@ class NPCAuctionAgent:
 		# Affordability factor
 		var afford_factor = 1.0 - (float(plot.base_price) / budget)
 
-		return (richness_match * 0.6 + afford_factor * 0.4) * aggression
+		# Multiply by aggression last — aggression caps at 0.25 in round 1,
+		# so raw score is used for the threshold comparison
+		return (richness_match * 0.6 + afford_factor * 0.4)
 
 # ============================================================================
 # SIGNALS
@@ -45,6 +47,8 @@ class NPCAuctionAgent:
 
 signal plots_generated(plots: Array[PlotData])
 signal npc_claimed_plot(plot_data: PlotData, npc_name: String)
+signal npc_considering_plot(plot_data: PlotData, npc_name: String)
+signal npc_turn_finished()
 
 # ============================================================================
 # DATA
@@ -162,10 +166,18 @@ func start_npc_turn() -> void:
 				best_score = score
 				best_plot = plot
 
-		# Claim plot if score exceeds threshold
+		# Claim plot if score is good enough (score is 0.0–1.0, aggression used as bid chance elsewhere)
 		if best_plot and best_score > 0.3:
+			# Phase 1: NPC is "considering" the plot (visual feedback)
+			npc_considering_plot.emit(best_plot, agent.agent_name)
+			await get_tree().create_timer(Config.NPC_BID_DELAY * 0.65).timeout
+			# Phase 2: NPC commits and claims
 			_npc_claim_plot(agent, best_plot)
-			await get_tree().create_timer(Config.NPC_BID_DELAY).timeout
+			await get_tree().create_timer(Config.NPC_BID_DELAY * 0.35).timeout
+
+	# Small delay ensures the signal is never emitted synchronously before callers can await it
+	await get_tree().process_frame
+	npc_turn_finished.emit()
 
 ## NPC claims a plot
 func _npc_claim_plot(agent: NPCAuctionAgent, plot: PlotData) -> void:

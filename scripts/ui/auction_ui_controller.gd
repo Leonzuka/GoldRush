@@ -27,6 +27,20 @@ var selected_plot: PlotData = null
 var money_tween: Tween
 var displayed_money: int = 0
 
+# NPC avatar panel (created in code)
+var npc_panel: PanelContainer
+var npc_avatar_label: Label
+var npc_name_label: Label
+var npc_status_label: Label
+var npc_panel_tween: Tween
+
+# NPC avatar colors matching their personality
+const NPC_COLORS: Dictionary = {
+	"Big Bob":   Color(0.9, 0.5, 0.1),
+	"Sly Sally": Color(0.6, 0.2, 0.8),
+	"Mad Max":   Color(0.9, 0.15, 0.15),
+}
+
 # ============================================================================
 # INITIALIZATION
 # ============================================================================
@@ -38,10 +52,15 @@ func _ready() -> void:
 	EventBus.money_changed.connect(_on_money_changed)
 	bid_button.pressed.connect(_on_bid_button_pressed)
 
+	# Build NPC avatar panel
+	_create_npc_panel()
+
 	# Create auction system
 	auction_system = AuctionSystem.new()
 	auction_system.add_to_group("auction_system")
 	auction_system.npc_claimed_plot.connect(_on_npc_claimed_plot)
+	auction_system.npc_considering_plot.connect(_on_npc_considering_plot)
+	auction_system.npc_turn_finished.connect(_on_npc_turn_finished)
 	add_child(auction_system)
 
 	# Update UI initial state
@@ -63,10 +82,7 @@ func _ready() -> void:
 	await get_tree().create_timer(1.5).timeout
 	info_label.text = "NPCs are choosing their plots..."
 	auction_system.start_npc_turn()
-
-	# Wait for NPCs to finish (NPC_BID_DELAY * NPC_COUNT_PER_AUCTION)
-	await get_tree().create_timer(Config.NPC_BID_DELAY * Config.NPC_COUNT_PER_AUCTION + 0.5).timeout
-	info_label.text = "Your turn! Select an available plot."
+	# "Your turn!" message is set by _on_npc_turn_finished when all NPCs finish
 
 # ============================================================================
 # PLOT SELECTION
@@ -148,6 +164,123 @@ func _animate_money_change(new_amount: int) -> void:
 	color_tween.tween_property(money_label, "modulate", Color.WHITE, 0.4)
 
 func _on_npc_claimed_plot(plot: PlotData, npc_name: String) -> void:
-	"""Visual feedback when NPC claims a plot"""
 	info_label.text = "%s claimed %s" % [npc_name, plot.plot_name]
 	map_controller.refresh_plot_visuals(plot)
+
+func _on_npc_considering_plot(plot: PlotData, npc_name: String) -> void:
+	_show_npc_panel(npc_name, plot.plot_name)
+
+func _on_npc_turn_finished() -> void:
+	_hide_npc_panel()
+	info_label.text = "Your turn! Select an available plot."
+
+# ============================================================================
+# NPC AVATAR PANEL
+# ============================================================================
+
+## Builds the NPC avatar floating panel (bottom-left of screen)
+func _create_npc_panel() -> void:
+	npc_panel = PanelContainer.new()
+	npc_panel.visible = false
+	npc_panel.custom_minimum_size = Vector2(200, 80)
+	npc_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	npc_panel.size_flags_vertical = Control.SIZE_SHRINK_END
+	npc_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 16)
+
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.07, 0.12, 0.92)
+	style.border_color = Color(1.0, 0.6, 0.1, 0.9)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 10
+	style.content_margin_right = 12
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	npc_panel.add_theme_stylebox_override("panel", style)
+
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	npc_panel.add_child(hbox)
+
+	# Avatar circle (Label styled as a colored circle)
+	npc_avatar_label = Label.new()
+	npc_avatar_label.custom_minimum_size = Vector2(52, 52)
+	npc_avatar_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	npc_avatar_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	npc_avatar_label.add_theme_font_size_override("font_size", 22)
+
+	var avatar_style = StyleBoxFlat.new()
+	avatar_style.bg_color = Color(0.3, 0.3, 0.35)
+	avatar_style.set_corner_radius_all(26)
+	avatar_style.set_border_width_all(2)
+	avatar_style.border_color = Color(1.0, 0.6, 0.1, 0.8)
+	npc_avatar_label.add_theme_stylebox_override("normal", avatar_style)
+	hbox.add_child(npc_avatar_label)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 2)
+	hbox.add_child(vbox)
+
+	npc_name_label = Label.new()
+	npc_name_label.add_theme_font_size_override("font_size", 13)
+	npc_name_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+	vbox.add_child(npc_name_label)
+
+	npc_status_label = Label.new()
+	npc_status_label.add_theme_font_size_override("font_size", 11)
+	npc_status_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
+	npc_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	npc_status_label.custom_minimum_size = Vector2(120, 0)
+	vbox.add_child(npc_status_label)
+
+	$UILayer.add_child(npc_panel)
+
+## Shows the NPC avatar panel with a slide-in animation
+func _show_npc_panel(npc_name: String, plot_name: String) -> void:
+	var color = NPC_COLORS.get(npc_name, Color(0.4, 0.6, 0.9))
+	var initials = _get_initials(npc_name)
+
+	npc_name_label.text = npc_name
+	npc_status_label.text = "Eyeing \"%s\"..." % plot_name
+	npc_avatar_label.text = initials
+	npc_avatar_label.add_theme_color_override("font_color", color.lightened(0.3))
+
+	# Tint avatar border with NPC color
+	var avatar_style = npc_avatar_label.get_theme_stylebox("normal").duplicate() as StyleBoxFlat
+	avatar_style.border_color = color
+	npc_avatar_label.add_theme_stylebox_override("normal", avatar_style)
+
+	if npc_panel_tween and npc_panel_tween.is_valid():
+		npc_panel_tween.kill()
+
+	# Reset anchor position, then slide in from below
+	npc_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 16)
+	npc_panel.position.y += 20
+	npc_panel.visible = true
+	npc_panel.modulate = Color(1, 1, 1, 0)
+
+	var target_y = npc_panel.position.y - 20
+	npc_panel_tween = create_tween().set_parallel(true)
+	npc_panel_tween.tween_property(npc_panel, "modulate", Color.WHITE, 0.25).set_ease(Tween.EASE_OUT)
+	npc_panel_tween.tween_property(npc_panel, "position:y", target_y, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+
+## Hides the NPC avatar panel with a fade-out
+func _hide_npc_panel() -> void:
+	if not npc_panel or not npc_panel.visible:
+		return
+
+	if npc_panel_tween and npc_panel_tween.is_valid():
+		npc_panel_tween.kill()
+
+	npc_panel_tween = create_tween()
+	npc_panel_tween.tween_property(npc_panel, "modulate", Color(1, 1, 1, 0), 0.3).set_ease(Tween.EASE_IN)
+	npc_panel_tween.tween_callback(func(): npc_panel.visible = false)
+
+## Returns the initials of an NPC name (e.g. "Big Bob" → "BB")
+func _get_initials(npc_name: String) -> String:
+	var parts = npc_name.split(" ")
+	var result = ""
+	for part in parts:
+		if part.length() > 0:
+			result += part[0].to_upper()
+	return result

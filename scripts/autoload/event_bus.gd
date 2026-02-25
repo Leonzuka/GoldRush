@@ -38,6 +38,10 @@ signal tile_dug(tile_pos: Vector2i)
 ## @param deposit_positions: Array of Vector2i tile positions with gold
 signal gold_detected(deposit_positions: Array)
 
+## Emitted when scanner cooldown changes (scan start or end)
+## @param remaining: Seconds remaining; 0.0 means ready to scan
+signal scanner_cooldown_changed(remaining: float)
+
 ## Emitted when player collects a gold nugget
 ## @param amount: Gold units collected
 signal gold_collected(amount: int)

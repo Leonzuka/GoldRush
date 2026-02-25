@@ -25,6 +25,8 @@ signal hovered(plot_tile: PlotTile)
 var is_hovered: bool = false
 var hover_tween: Tween
 var pulse_tween: Tween
+var pin_tween: Tween
+var npc_pin: Label
 
 func _input(event: InputEvent) -> void:
 	if not plot_data:
@@ -32,19 +34,24 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventMouseButton:
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			# Check if mouse is within our collision shape
 			var local_pos = area.get_local_mouse_position()
-
 			if _point_in_polygon(local_pos, collision.polygon):
-				print("[PlotTile] Click INSIDE polygon on " + plot_data.plot_name + "!")
-				print("[PlotTile] is_biddable: " + str(plot_data.is_biddable()) + ", owner: " + PlotData.OwnerType.keys()[plot_data.owner_type])
-
 				if plot_data.is_biddable():
-					print("[PlotTile] Emitting clicked signal!")
 					clicked.emit(self)
 					get_viewport().set_input_as_handled()
-				else:
-					print("[PlotTile] Plot is NOT biddable, not emitting signal")
+
+func _process(_delta: float) -> void:
+	if not plot_data:
+		return
+
+	var local_pos = area.get_local_mouse_position()
+	var mouse_over = _point_in_polygon(local_pos, collision.polygon)
+
+	if mouse_over != is_hovered:
+		is_hovered = mouse_over
+		if is_hovered:
+			hovered.emit(self)
+		update_visual_state()
 
 func _point_in_polygon(point: Vector2, polygon: PackedVector2Array) -> bool:
 	# Simple point-in-polygon test
@@ -63,40 +70,19 @@ func _ready() -> void:
 	# Setup immediately - no deferred calls
 	_setup_geometry()
 	_setup_input()
+	_setup_npc_pin()
 
 	# Load Gold Mine sprite (now using .jpeg extension)
 	_setup_mine_sprite()
 
 	if plot_data:
 		update_visual_state()
-		print("[PlotTile] Ready: " + plot_data.plot_name + " at position " + str(position))
+		if OS.is_debug_build():
+			print("[PlotTile] Ready: " + plot_data.plot_name + " at position " + str(position))
 
-	# Debug: Verify Area2D configuration
-	print("[PlotTile] Area2D pickable: " + str(area.input_pickable) + ", monitoring: " + str(area.monitoring))
-	print("[PlotTile] CollisionPolygon2D points: " + str(collision.polygon.size()))
-
-	# Enable processing for hover detection
-	set_process(true)
-
-func _process(_delta: float) -> void:
-	if not plot_data or not plot_data.is_biddable():
-		if is_hovered:
-			is_hovered = false
-			update_visual_state()
-		return
-
-	# Check if mouse is hovering over this tile
-	var local_pos = area.get_local_mouse_position()
-	var mouse_over = _point_in_polygon(local_pos, collision.polygon)
-
-	if mouse_over != is_hovered:
-		is_hovered = mouse_over
-		if is_hovered:
-			print("[PlotTile] Mouse entered " + plot_data.plot_name)
-			hovered.emit(self)
-		else:
-			print("[PlotTile] Mouse exited " + plot_data.plot_name)
-		update_visual_state()
+	if OS.is_debug_build():
+		print("[PlotTile] Area2D pickable: " + str(area.input_pickable) + ", monitoring: " + str(area.monitoring))
+		print("[PlotTile] CollisionPolygon2D points: " + str(collision.polygon.size()))
 
 ## Setup Gold Mine sprite to fill the isometric tile
 func _setup_mine_sprite() -> void:
@@ -116,7 +102,8 @@ func _setup_mine_sprite() -> void:
 		owner_flag.position = Vector2.ZERO  # Centered on the diamond
 		owner_flag.visible = false  # Hidden until owned
 
-		print("[PlotTile] Gold Mine sprite loaded: scale=%.2f" % scale_factor)
+		if OS.is_debug_build():
+			print("[PlotTile] Gold Mine sprite loaded: scale=%.2f" % scale_factor)
 	else:
 		push_error("[PlotTile] Failed to load Gold_Mine.jpeg")
 
@@ -125,8 +112,6 @@ func _setup_geometry() -> void:
 	var hw = Config.ISO_TILE_WIDTH / 2.0
 	var hh = Config.ISO_TILE_HEIGHT / 2.0
 	var depth = Config.ISO_TILE_DEPTH
-
-	print("[PlotTile] Setup geometry: hw=%.1f, hh=%.1f, depth=%.1f" % [hw, hh, depth])
 
 	# Ground face (top diamond)
 	var diamond = PackedVector2Array([
@@ -172,10 +157,6 @@ func _setup_geometry() -> void:
 		Vector2(0, -hh)  # Close the loop
 	])
 
-	print("[PlotTile] Geometry set: ground=%d points, border=%d points" % [
-		ground_polygon.polygon.size(), border_line.points.size()
-	])
-
 ## Sets up input detection
 func _setup_input() -> void:
 	# Explicitly configure Area2D for input
@@ -184,11 +165,8 @@ func _setup_input() -> void:
 	area.monitorable = false
 
 	# Connect signals
-	area.input_event.connect(_on_area_input_event)
 	area.mouse_entered.connect(_on_mouse_entered)
 	area.mouse_exited.connect(_on_mouse_exited)
-
-	print("[PlotTile] Input setup complete, signals connected")
 
 ## Updates visual appearance based on plot state
 func update_visual_state() -> void:
@@ -217,6 +195,7 @@ func update_visual_state() -> void:
 			owner_flag.visible = false
 
 		PlotData.OwnerType.NPC:
+			is_hovered = false
 			modulate = Color(0.6, 0.6, 0.7)
 			scale = Vector2.ONE
 			border_line.width = 2.0
@@ -227,6 +206,7 @@ func update_visual_state() -> void:
 			owner_flag.modulate = Color(0.8, 0.3, 0.3, 0.8)
 
 		PlotData.OwnerType.PLAYER:
+			is_hovered = false
 			modulate = Color(0.7, 0.9, 1.2)
 			scale = Vector2.ONE
 			border_line.width = 3.0
@@ -260,24 +240,62 @@ func _animate_hover_out() -> void:
 	hover_tween.tween_property(border_line, "default_color", Color(0.3, 0.3, 0.3), 0.2)
 	hover_tween.tween_property(depth_border_line, "default_color", Color(0.3, 0.3, 0.3), 0.2)
 
-func _on_area_input_event(_viewport, event, _shape_idx):
-	print("[PlotTile] Input event: %s" % event)
-	if event is InputEventMouseButton:
-		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			if plot_data and plot_data.is_biddable():
-				print("[PlotTile] Clicked on %s!" % plot_data.plot_name)
-				clicked.emit(self)
-			elif plot_data:
-				print("[PlotTile] Clicked but not biddable (owner: %s)" % plot_data.owner_name)
-
 func _on_mouse_entered() -> void:
-	print("[PlotTile] Mouse entered")
 	if plot_data and plot_data.is_biddable():
 		is_hovered = true
 		hovered.emit(self)
 		update_visual_state()
 
 func _on_mouse_exited() -> void:
-	print("[PlotTile] Mouse exited")
 	is_hovered = false
 	update_visual_state()
+
+## Creates the NPC pinpoint label positioned above the tile
+func _setup_npc_pin() -> void:
+	npc_pin = Label.new()
+	npc_pin.visible = false
+	npc_pin.z_index = 10
+	npc_pin.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	npc_pin.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	npc_pin.position = Vector2(-50, -Config.ISO_TILE_HEIGHT - 28)
+	npc_pin.custom_minimum_size = Vector2(100, 28)
+
+	# Style the pin background
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.1, 0.15, 0.85)
+	style.border_color = Color(1.0, 0.6, 0.1)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	npc_pin.add_theme_stylebox_override("normal", style)
+	npc_pin.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+	npc_pin.add_theme_font_size_override("font_size", 11)
+
+	add_child(npc_pin)
+
+## Shows the NPC pinpoint marker with an animated pop-in
+func show_npc_pin(npc_name: String) -> void:
+	npc_pin.text = "📍 %s" % npc_name
+	npc_pin.visible = true
+	npc_pin.scale = Vector2(0.3, 0.3)
+	npc_pin.modulate = Color(1, 1, 1, 0)
+
+	if pin_tween and pin_tween.is_valid():
+		pin_tween.kill()
+
+	pin_tween = create_tween().set_parallel(true)
+	pin_tween.tween_property(npc_pin, "scale", Vector2.ONE, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	pin_tween.tween_property(npc_pin, "modulate", Color.WHITE, 0.2)
+
+## Hides the NPC pinpoint marker with a fade-out
+func hide_npc_pin() -> void:
+	if not npc_pin or not npc_pin.visible:
+		return
+
+	if pin_tween and pin_tween.is_valid():
+		pin_tween.kill()
+
+	pin_tween = create_tween()
+	pin_tween.tween_property(npc_pin, "modulate", Color(1, 1, 1, 0), 0.15)
+	pin_tween.tween_callback(func(): npc_pin.visible = false)

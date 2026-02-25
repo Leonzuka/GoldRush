@@ -21,6 +21,9 @@ var displayed_money: int = 0
 var target_money: int = 0
 var money_tween: Tween
 
+# Scanner cooldown (local countdown driven by EventBus signal)
+var _scanner_cooldown: float = 0.0
+
 # ============================================================================
 # INITIALIZATION
 # ============================================================================
@@ -29,6 +32,7 @@ func _ready() -> void:
 	EventBus.session_time_updated.connect(_on_time_updated)
 	EventBus.resource_storage_changed.connect(_on_storage_changed)
 	EventBus.money_changed.connect(_on_money_changed)
+	EventBus.scanner_cooldown_changed.connect(_on_scanner_cooldown_changed)
 
 	# Create FPS counter
 	_create_fps_counter()
@@ -83,21 +87,32 @@ func _on_money_changed(new_amount: int) -> void:
 # SCANNER BUTTON
 # ============================================================================
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# Update FPS counter
 	if fps_label:
 		fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
 
-	# Update scan button cooldown display
-	var scanner: Node = get_tree().get_first_node_in_group("scanner")
-	if scanner and scanner.has_method("get_cooldown_remaining"):
-		var cooldown: float = scanner.get_cooldown_remaining()
-		if cooldown > 0:
-			scan_button.text = "SCAN (%.1fs)" % cooldown
-			scan_button.disabled = true
+	# Decrement local scanner cooldown countdown
+	if _scanner_cooldown > 0.0:
+		_scanner_cooldown = maxf(_scanner_cooldown - delta, 0.0)
+		if _scanner_cooldown > 0.0:
+			scan_button.text = "SCAN (%.1fs)" % _scanner_cooldown
 		else:
 			scan_button.text = "SCAN [E]"
 			scan_button.disabled = false
+
+# ============================================================================
+# SCANNER COOLDOWN
+# ============================================================================
+
+func _on_scanner_cooldown_changed(remaining: float) -> void:
+	_scanner_cooldown = remaining
+	if remaining > 0.0:
+		scan_button.disabled = true
+		scan_button.text = "SCAN (%.1fs)" % remaining
+	else:
+		scan_button.disabled = false
+		scan_button.text = "SCAN [E]"
 
 # ============================================================================
 # MONEY ANIMATION

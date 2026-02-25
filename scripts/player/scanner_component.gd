@@ -68,6 +68,7 @@ func perform_scan() -> Array:
 	# Start cooldown
 	is_ready_to_scan = false
 	cooldown_timer.start(scan_cooldown)
+	EventBus.scanner_cooldown_changed.emit(scan_cooldown)
 
 	# Get player tile position
 	var player_pos: Vector2 = player.global_position
@@ -100,6 +101,7 @@ func perform_scan() -> Array:
 
 func _on_cooldown_finished() -> void:
 	is_ready_to_scan = true
+	EventBus.scanner_cooldown_changed.emit(0.0)
 
 ## Get cooldown remaining (for UI)
 func get_cooldown_remaining() -> float:

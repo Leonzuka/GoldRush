@@ -2,15 +2,10 @@
 
 ## 🔴 Tarefas Imediatas (Sprint Atual)
 - Refatorar a UI/UX completamente Planmode
+- Terras indisponíveis quando um NPC escolhe
 
 ### Gameplay Core
-- [ ] Testar sistema de leilao com multiplos NPCs
 - [ ] Validar balanceamento de dificuldade dos plots
-- [ ] Add um PinPoint onde os bots estão escolhendo os lots + placeholder/foto do bot durante o Leilao.
-
-### Qualidade de Codigo
-- [ ] Remover prints de debug excessivos (plot_tile.gd, isometric_map_controller.gd)
-- [ ] Adicionar guards para null em `_process()` do plot_tile.gd (evitar checks todo frame)
 
 ### Balanceamento
 - [ ] Testar curva de dificuldade: rounds 1-5 devem ser progressivamente mais dificeis
@@ -61,8 +56,7 @@
 
 ### Visual
 - [ ] Shader de escavacao suave (ja existe em `shaders/terrain_dig.gdshader`)
-- [ ] Assets artisticos pintados a mao (substituir placeholders)
-- [ ] Animacoes de transicao entre telas (fade, slide)
+- [ ] Assets artisticos (substituir placeholders)
 - [ ] Indicador visual de progresso de drill (barra de progresso no tile)
 - [ ] Efeito de particulas ao cavar bedrock (faiscas de impacto)
 - [ ] Parallax background na cena de mineracao (ceu, nuvens)
@@ -96,16 +90,13 @@
 - [ ] Veio de Ouro (deposito gigante raro com 200+ ouro)
 
 ### NPCs e Competicao
-- [ ] NPCs mineradores rivais no mapa (disputam ouro em tempo real)
 - [ ] Sistema de sabotagem/interacao com rivais
 - [ ] Perfis de personalidade dos NPCs (agressivo, conservador, esperto)
 - [ ] NPCs com estrategias de leilao visiveis (tells/bluffs)
 
 ### Modos de Jogo
 - [ ] Modo historia com narrativa (cutscenes simples entre rounds)
-- [ ] Modo endless (sem limite de rounds, dificuldade crescente)
 - [ ] Modo desafio (objetivos especificos: "colete 300 ouro em 60s")
-- [ ] Multiplayer local no leilao (2-4 jogadores)
 
 ---
 
@@ -126,8 +117,7 @@
 ## 🐛 Bugs Conhecidos
 
 - [x] ~~A lateral do slot do leilao nao renderizava~~ (Adicionado LeftDepthPolygon + DepthBorderLine)
-- [ ] Scanner cooldown visual no HUD depende de encontrar node "scanner" por grupo (fragil)
-- [ ] `_on_area_input_event` em plot_tile.gd pode conflitar com `_input` (duplo click handling)
+- [ ] Problema de física do player encaixar em um slot de terrain.
 
 ## 📝 Ideias Nao Priorizadas
 
@@ -140,4 +130,3 @@
 - Clima dinamico que afeta mineracao (chuva = lama escorregadia, sol = sede)
 - Sistema de fadiga do player (precisa descansar apos X minutos)
 - Mercado negro com itens raros e ilegais (risco/recompensa)
-- Jornal local com noticias que dao dicas de onde minerar
