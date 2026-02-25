@@ -23,6 +23,7 @@ var player: CharacterBody2D
 # ============================================================================
 
 var is_drilling: bool = false
+var is_out_of_range: bool = false
 var current_target_tile: Vector2i
 var drill_progress: float = 0.0
 
@@ -59,11 +60,14 @@ func _process(delta: float) -> void:
 
 		# Check reach distance
 		if player_pos.distance_to(mouse_pos) <= drill_reach:
+			is_out_of_range = false
 			var target_tile: Vector2i = terrain_manager.world_to_tile(mouse_pos)
 			attempt_drill(target_tile, delta)
 		else:
+			is_out_of_range = true
 			reset_drill()
 	else:
+		is_out_of_range = false
 		reset_drill()
 
 func attempt_drill(tile_pos: Vector2i, delta: float) -> void:

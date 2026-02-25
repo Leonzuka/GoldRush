@@ -1,26 +1,20 @@
 # GoldRush - TODO List
 
-Este arquivo organiza as proximas tarefas e melhorias do projeto.
-
 ## 🔴 Tarefas Imediatas (Sprint Atual)
+- Refatorar a UI/UX completamente Planmode
 
 ### Gameplay Core
-- [ ] Add escada ou pulo para o player subir (sem isso o jogador fica preso apos descer)
 - [ ] Testar sistema de leilao com multiplos NPCs
 - [ ] Validar balanceamento de dificuldade dos plots
-- [ ] Add um PinPoint com espaco para uma foto do bot durante o Leilao
+- [ ] Add um PinPoint onde os bots estão escolhendo os lots + placeholder/foto do bot durante o Leilao.
 
 ### Qualidade de Codigo
-- [ ] Criar CLAUDE.md por secao de codigo (auction/, mining/, player/, etc)
 - [ ] Remover prints de debug excessivos (plot_tile.gd, isometric_map_controller.gd)
 - [ ] Adicionar guards para null em `_process()` do plot_tile.gd (evitar checks todo frame)
 
 ### Balanceamento
-- [ ] Ajustar DRILL_REACH (32px pode ser muito curto para tiles de 16px)
 - [ ] Testar curva de dificuldade: rounds 1-5 devem ser progressivamente mais dificeis
 - [ ] Validar que 25-50 depositos por plot gera gameplay de ~2 minutos satisfatorio
-
----
 
 ## 🟡 Phase 2: Sistema de Mercado
 
@@ -87,8 +81,7 @@ Este arquivo organiza as proximas tarefas e melhorias do projeto.
 ### UX
 - [ ] Tutorial interativo no primeiro round (highlight areas, setas guia)
 - [ ] Tooltips explicativos em todos os botoes
-- [ ] Feedback visual quando drill esta fora de alcance
-- [ ] Minimap mostrando areas ja exploradas
+- [x] ~~Feedback visual quando drill esta fora de alcance~~ (Circulo branco = alcance, circulo vermelho + texto quando fora)
 - [ ] Indicador de direcao para ouro detectado (seta na borda da tela)
 
 ---
@@ -121,8 +114,6 @@ Este arquivo organiza as proximas tarefas e melhorias do projeto.
 - [ ] Sistema de conquistas/achievements
 - [ ] Placar global (leaderboard)
 - [ ] Estatisticas detalhadas (graficos de performance por round)
-- [ ] Modo sandbox (recursos infinitos, sem timer)
-- [ ] Editor de mapas customizados
 - [ ] Steam Workshop integration
 - [ ] Localizacao (PT-BR, EN, ES)
 - [ ] Controller support (gamepad mapping)
@@ -134,12 +125,9 @@ Este arquivo organiza as proximas tarefas e melhorias do projeto.
 
 ## 🐛 Bugs Conhecidos
 
-- [x] ~~Ao pegar 2-3 ouros o jogo terminava~~ (STORAGE_CAPACITY: 100 -> 500)
 - [x] ~~A lateral do slot do leilao nao renderizava~~ (Adicionado LeftDepthPolygon + DepthBorderLine)
-- [ ] Verificar se gold_nugget fica preso em tiles solidos ao se mover em direcao ao player
 - [ ] Scanner cooldown visual no HUD depende de encontrar node "scanner" por grupo (fragil)
 - [ ] `_on_area_input_event` em plot_tile.gd pode conflitar com `_input` (duplo click handling)
-
 
 ## 📝 Ideias Nao Priorizadas
 

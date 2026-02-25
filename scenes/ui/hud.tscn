@@ -67,4 +67,4 @@ show_percentage = false
 
 [node name="ScanButton" type="Button" parent="BottomBar"]
 layout_mode = 2
-text = "SCAN [SPACE]"
+text = "SCAN [E]"

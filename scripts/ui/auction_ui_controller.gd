@@ -45,9 +45,9 @@ func _ready() -> void:
 	add_child(auction_system)
 
 	# Update UI initial state
-	title_label.text = "Leilão de Terras - Rodada %d" % GameManager.round_number
+	title_label.text = "Land Auction - Round %d" % GameManager.round_number
 	displayed_money = GameManager.player_money
-	money_label.text = "Orçamento: $%d" % displayed_money
+	money_label.text = "Budget: $%d" % displayed_money
 	info_panel.visible = false
 
 	# CRITICAL: Wait for IsometricMapController to be ready and connected
@@ -61,12 +61,12 @@ func _ready() -> void:
 
 	# Wait for map to load, then start NPC turn
 	await get_tree().create_timer(1.5).timeout
-	info_label.text = "NPCs estão escolhendo seus terrenos..."
+	info_label.text = "NPCs are choosing their plots..."
 	auction_system.start_npc_turn()
 
 	# Wait for NPCs to finish (NPC_BID_DELAY * NPC_COUNT_PER_AUCTION)
 	await get_tree().create_timer(Config.NPC_BID_DELAY * Config.NPC_COUNT_PER_AUCTION + 0.5).timeout
-	info_label.text = "Sua vez! Selecione um terreno disponível."
+	info_label.text = "Your turn! Select an available plot."
 
 # ============================================================================
 # PLOT SELECTION
@@ -79,16 +79,16 @@ func show_plot_info(plot: PlotData) -> void:
 
 	plot_name_label.text = plot.plot_name
 	richness_label.text = "★".repeat(plot.get_star_rating()) + " " + plot.get_richness_tier()
-	price_label.text = "Lance inicial: $%d" % plot.base_price
+	price_label.text = "Starting Bid: $%d" % plot.base_price
 
 	if plot.owner_type == PlotData.OwnerType.NPC:
-		status_label.text = "Pertence a: %s" % plot.owner_name
+		status_label.text = "Owned by: %s" % plot.owner_name
 		bid_button.disabled = true
-		bid_button.text = "Indisponível"
+		bid_button.text = "Unavailable"
 	else:
-		status_label.text = "Disponível"
+		status_label.text = "Available"
 		bid_button.disabled = not GameManager.can_afford(plot.base_price)
-		bid_button.text = "Fazer Lance" if not bid_button.disabled else "Sem Fundos"
+		bid_button.text = "Place Bid" if not bid_button.disabled else "No Funds"
 
 # ============================================================================
 # BIDDING
@@ -101,7 +101,7 @@ func _on_bid_button_pressed() -> void:
 	var bid_price = selected_plot.base_price
 
 	if not GameManager.can_afford(bid_price):
-		info_label.text = "Fundos insuficientes!"
+		info_label.text = "Insufficient funds!"
 		return
 
 	# Claim plot
@@ -109,7 +109,7 @@ func _on_bid_button_pressed() -> void:
 	selected_plot.final_bid_price = bid_price
 
 	# Visual feedback
-	info_label.text = "Terreno adquirido por $%d!" % bid_price
+	info_label.text = "Plot acquired for $%d!" % bid_price
 	info_panel.visible = false
 	map_controller.refresh_plot_visuals(selected_plot)
 
@@ -138,7 +138,7 @@ func _animate_money_change(new_amount: int) -> void:
 	money_tween = create_tween()
 	money_tween.tween_method(func(v: float):
 		displayed_money = int(v)
-		money_label.text = "Orçamento: $%d" % displayed_money
+		money_label.text = "Budget: $%d" % displayed_money
 	, float(old_amount), float(new_amount), duration)\
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 
@@ -149,5 +149,5 @@ func _animate_money_change(new_amount: int) -> void:
 
 func _on_npc_claimed_plot(plot: PlotData, npc_name: String) -> void:
 	"""Visual feedback when NPC claims a plot"""
-	info_label.text = "%s reivindicou %s" % [npc_name, plot.plot_name]
+	info_label.text = "%s claimed %s" % [npc_name, plot.plot_name]
 	map_controller.refresh_plot_visuals(plot)

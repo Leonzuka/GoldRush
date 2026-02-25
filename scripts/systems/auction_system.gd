@@ -175,4 +175,4 @@ func _npc_claim_plot(agent: NPCAuctionAgent, plot: PlotData) -> void:
 	agent.owned_plot = plot
 
 	npc_claimed_plot.emit(plot, agent.agent_name)
-	print("[Auction] %s reivindicou %s por $%d" % [agent.agent_name, plot.plot_name, plot.base_price])
+	print("[Auction] %s claimed %s for $%d" % [agent.agent_name, plot.plot_name, plot.base_price])

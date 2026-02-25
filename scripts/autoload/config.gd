@@ -18,7 +18,7 @@ const MAX_PLOT_PRICE: int = 500
 const ROUND_TIME_LIMIT: float = 120.0  # 2 minutes
 const STORAGE_CAPACITY: int = 500      # Gold units
 const DRILL_SPEED: float = 3.0         # Tiles per second
-const DRILL_REACH: float = 32.0        # Pixels from player
+const DRILL_REACH: float = 48.0        # Pixels from player (3 tiles)
 
 # ============================================================================
 # SCANNER CONSTANTS
@@ -69,6 +69,7 @@ const NPC_AGGRESSION_SCALING: float = 0.05  # +5% per round
 
 const PLAYER_SPEED: float = 150.0
 const PLAYER_GRAVITY: float = 980.0
+const PLAYER_JUMP_VELOCITY: float = 350.0
 
 # ============================================================================
 # HELPER FUNCTIONS

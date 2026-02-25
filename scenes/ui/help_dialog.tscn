@@ -149,7 +149,7 @@ text = "Drill Tile"
 [node name="Key2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MiningSection/GridContainer"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "Space"
+text = "E"
 horizontal_alignment = 2
 
 [node name="Desc2" type="Label" parent="PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer/MiningSection/GridContainer"]

@@ -1,8 +1,5 @@
 # GoldRush - Documentação de Implementação
-
-## Status: ✅ MVP COMPLETO
-
-Implementação completa do GoldRush conforme o plano aprovado. Todos os sistemas core estão funcionais e prontos para teste.
+    MVP COMPLETO
 
 ## Arquivos Criados
 
@@ -144,7 +141,7 @@ GoldRush/
 - Spawna gold nuggets ao encontrar ouro
 
 **ScannerComponent**
-- SPACE para scanear
+- E para scanear
 - Raio de 80px (5 tiles)
 - Cooldown de 3 segundos
 - Revela depósitos de ouro no Dictionary
@@ -206,10 +203,10 @@ GoldRush/
 
 ✅ **Input Actions configurados:**
 - drill (Left Mouse Button)
-- scan (SPACE)
+- scan (E)
 - move_left (A, LEFT Arrow)
 - move_right (D, RIGHT Arrow)
-- move_up (W, UP Arrow)
+- move_up (SPACE)
 - move_down (S, DOWN Arrow)
 
 ✅ **Rendering:**
@@ -261,7 +258,6 @@ godot .
 - [ ] Player deve aparecer (quadrado azul)
 - [ ] WASD/Arrows para mover
 - [ ] Pressionar F12 para debug overlay (círculos amarelos/laranjas mostram ouro)
-- [ ] SPACE para scanear (revela ouro próximo)
 - [ ] Click esquerdo para perfurar tiles
 - [ ] Pepitas douradas devem spawnar e voar para o player
 - [ ] HUD deve atualizar (Time, Gold, Storage bar)

@@ -42,8 +42,8 @@ func _ready() -> void:
 
 ## Setup tooltips for UI elements
 func _setup_tooltips() -> void:
-	scan_button.tooltip_text = "Detectar ouro próximo (Pressione SPACE)\nCooldown: 3 segundos"
-	storage_bar.tooltip_text = "Capacidade de armazenamento de ouro\nRetorne ao caminhão quando estiver cheio"
+	scan_button.tooltip_text = "Detect nearby gold (Press E)\nCooldown: 3 seconds"
+	storage_bar.tooltip_text = "Gold storage capacity\nReturn to the truck when full"
 
 ## Create FPS counter label programmatically
 func _create_fps_counter() -> void:
@@ -96,7 +96,7 @@ func _process(_delta: float) -> void:
 			scan_button.text = "SCAN (%.1fs)" % cooldown
 			scan_button.disabled = true
 		else:
-			scan_button.text = "SCAN [SPACE]"
+			scan_button.text = "SCAN [E]"
 			scan_button.disabled = false
 
 # ============================================================================

@@ -63,7 +63,7 @@ grow_horizontal = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
-text = "Leilão de Terras - Rodada 1"
+text = "Land Auction - Round 1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -71,7 +71,7 @@ vertical_alignment = 1
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 18
-text = "Orçamento: $1000"
+text = "Budget: $1000"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -106,17 +106,17 @@ horizontal_alignment = 1
 
 [node name="PriceLabel" type="Label" parent="UILayer/PlotInfoPanel/VBoxContainer"]
 layout_mode = 2
-text = "Lance inicial: $200"
+text = "Starting Bid: $200"
 horizontal_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="UILayer/PlotInfoPanel/VBoxContainer"]
 layout_mode = 2
-text = "Disponível"
+text = "Available"
 horizontal_alignment = 1
 
 [node name="BidButton" type="Button" parent="UILayer/PlotInfoPanel/VBoxContainer"]
 layout_mode = 2
-text = "Fazer Lance"
+text = "Place Bid"
 
 [node name="InfoLabel" type="Label" parent="UILayer"]
 anchors_preset = 7
@@ -131,6 +131,6 @@ offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_font_sizes/font_size = 16
-text = "Selecione um terreno disponível"
+text = "Select an available plot"
 horizontal_alignment = 1
 vertical_alignment = 1
