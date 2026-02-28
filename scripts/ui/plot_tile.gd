@@ -199,22 +199,22 @@ func update_visual_state() -> void:
 			modulate = Color(0.6, 0.6, 0.7)
 			scale = Vector2.ONE
 			border_line.width = 2.0
-			border_line.default_color = Color(0.8, 0.3, 0.3)
+			border_line.default_color = UITheme.COLOR_DANGER
 			depth_border_line.width = 2.0
-			depth_border_line.default_color = Color(0.8, 0.3, 0.3)
+			depth_border_line.default_color = UITheme.COLOR_DANGER
 			owner_flag.visible = true
-			owner_flag.modulate = Color(0.8, 0.3, 0.3, 0.8)
+			owner_flag.modulate = Color(UITheme.COLOR_DANGER.r, UITheme.COLOR_DANGER.g, UITheme.COLOR_DANGER.b, 0.8)
 
 		PlotData.OwnerType.PLAYER:
 			is_hovered = false
-			modulate = Color(0.7, 0.9, 1.2)
+			modulate = Color(1.1, 1.0, 0.8)
 			scale = Vector2.ONE
 			border_line.width = 3.0
-			border_line.default_color = Color(0.2, 0.6, 1.0)
+			border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
 			depth_border_line.width = 3.0
-			depth_border_line.default_color = Color(0.2, 0.6, 1.0)
+			depth_border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
 			owner_flag.visible = true
-			owner_flag.modulate = Color(0.2, 0.6, 1.0, 0.8)
+			owner_flag.modulate = Color(UITheme.COLOR_GOLD_PRIMARY.r, UITheme.COLOR_GOLD_PRIMARY.g, UITheme.COLOR_GOLD_PRIMARY.b, 0.8)
 
 ## Animate tile when mouse hovers over it
 func _animate_hover_in() -> void:
@@ -222,14 +222,14 @@ func _animate_hover_in() -> void:
 	hover_tween.tween_property(self, "scale", Vector2(1.08, 1.08), 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	hover_tween.tween_property(self, "modulate", Color(1.25, 1.2, 1.1), 0.15)
 	border_line.width = 3.0
-	border_line.default_color = Color(1.0, 0.9, 0.5)
+	border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
 	depth_border_line.width = 3.0
-	depth_border_line.default_color = Color(1.0, 0.9, 0.5)
+	depth_border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
 
 	# Start pulsating border glow
 	pulse_tween = create_tween().set_loops()
-	pulse_tween.tween_property(border_line, "default_color", Color(1.0, 0.85, 0.3), 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-	pulse_tween.tween_property(border_line, "default_color", Color(1.0, 0.95, 0.7), 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	pulse_tween.tween_property(border_line, "default_color", UITheme.COLOR_GOLD_PRIMARY, 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	pulse_tween.tween_property(border_line, "default_color", UITheme.COLOR_GOLD_BRIGHT, 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 
 ## Animate tile back to normal when mouse leaves
 func _animate_hover_out() -> void:
@@ -237,8 +237,8 @@ func _animate_hover_out() -> void:
 	hover_tween.tween_property(self, "scale", Vector2.ONE, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	hover_tween.tween_property(self, "modulate", Color.WHITE, 0.2)
 	hover_tween.tween_property(border_line, "width", 1.5, 0.2)
-	hover_tween.tween_property(border_line, "default_color", Color(0.3, 0.3, 0.3), 0.2)
-	hover_tween.tween_property(depth_border_line, "default_color", Color(0.3, 0.3, 0.3), 0.2)
+	hover_tween.tween_property(border_line, "default_color", UITheme.COLOR_BORDER_GOLD.darkened(0.5), 0.2)
+	hover_tween.tween_property(depth_border_line, "default_color", UITheme.COLOR_BORDER_GOLD.darkened(0.5), 0.2)
 
 func _on_mouse_entered() -> void:
 	if plot_data and plot_data.is_biddable():
@@ -262,14 +262,14 @@ func _setup_npc_pin() -> void:
 
 	# Style the pin background
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.1, 0.15, 0.85)
-	style.border_color = Color(1.0, 0.6, 0.1)
+	style.bg_color = Color(UITheme.COLOR_BG_DEEP.r, UITheme.COLOR_BG_DEEP.g, UITheme.COLOR_BG_DEEP.b, 0.85)
+	style.border_color = UITheme.COLOR_GOLD_PRIMARY
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(6)
 	style.content_margin_left = 6
 	style.content_margin_right = 6
 	npc_pin.add_theme_stylebox_override("normal", style)
-	npc_pin.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+	npc_pin.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
 	npc_pin.add_theme_font_size_override("font_size", 11)
 
 	add_child(npc_pin)

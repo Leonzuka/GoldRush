@@ -4,8 +4,9 @@
 [ext_resource type="Script" path="res://scripts/player/drill_component.gd" id="2_drill"]
 [ext_resource type="Script" path="res://scripts/player/scanner_component.gd" id="3_scanner"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
-size = Vector2(14, 30)
+[sub_resource type="CapsuleShape2D" id="RectangleShape2D_1"]
+radius = 7.0
+height = 30.0
 
 [node name="Player" type="CharacterBody2D" groups=["player"]]
 collision_layer = 2

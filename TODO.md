@@ -1,8 +1,7 @@
 # GoldRush - TODO List
 
 ## 🔴 Tarefas Imediatas (Sprint Atual)
-- Refatorar a UI/UX completamente Planmode
-- Terras indisponíveis quando um NPC escolhe
+- Terras indisponíveis quando um NPC escolhe - add um minigame
 
 ### Gameplay Core
 - [ ] Validar balanceamento de dificuldade dos plots
@@ -22,7 +21,6 @@
 ### Compradores
 - [ ] Adicionar multiplos compradores (Banco, Joalheiro, Mercado Negro)
 - [ ] Cada comprador com multiplicador de preco diferente e preferencias
-- [ ] Tela de venda pos-mineracao (escolher para quem vender)
 
 ### Eventos de Mercado
 - [ ] Criar eventos que afetam o mercado (descobertas, escassez, inflacao)
@@ -76,7 +74,7 @@
 - [ ] Tutorial interativo no primeiro round (highlight areas, setas guia)
 - [ ] Tooltips explicativos em todos os botoes
 - [x] ~~Feedback visual quando drill esta fora de alcance~~ (Circulo branco = alcance, circulo vermelho + texto quando fora)
-- [ ] Indicador de direcao para ouro detectado (seta na borda da tela)
+- [ ] Indicador de direcao para ouro detectado (seta na borda da tela)?
 
 ---
 
@@ -92,12 +90,10 @@
 ### NPCs e Competicao
 - [ ] Sistema de sabotagem/interacao com rivais
 - [ ] Perfis de personalidade dos NPCs (agressivo, conservador, esperto)
-- [ ] NPCs com estrategias de leilao visiveis (tells/bluffs)
 
 ### Modos de Jogo
 - [ ] Modo historia com narrativa (cutscenes simples entre rounds)
 - [ ] Modo desafio (objetivos especificos: "colete 300 ouro em 60s")
-
 ---
 
 ## 💡 Nice to Have (Baixa Prioridade)
@@ -117,7 +113,6 @@
 ## 🐛 Bugs Conhecidos
 
 - [x] ~~A lateral do slot do leilao nao renderizava~~ (Adicionado LeftDepthPolygon + DepthBorderLine)
-- [ ] Problema de física do player encaixar em um slot de terrain.
 
 ## 📝 Ideias Nao Priorizadas
 

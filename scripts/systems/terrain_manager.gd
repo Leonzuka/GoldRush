@@ -30,6 +30,9 @@ var gold_deposits: Dictionary = {}
 var gold_indicators: Dictionary = {}
 var indicator_container: Node2D
 
+## Bedrock tile positions tracked for visual overlay
+var bedrock_tiles: Array[Vector2i] = []
+
 ## Tile IDs (matches tileset configuration)
 ## Using atlas coordinates (x, y) for tiles WITH collision shapes
 const TILE_EMPTY: int = -1
@@ -51,6 +54,7 @@ func generate_terrain(seed_value: int, gold_richness: float) -> void:
 	# Clear existing data
 	tilemap.clear()
 	gold_deposits.clear()
+	bedrock_tiles.clear()
 
 	# Generate terrain layers
 	_generate_terrain_tiles()
@@ -59,32 +63,40 @@ func generate_terrain(seed_value: int, gold_richness: float) -> void:
 	var deposit_count: int = Config.get_deposit_count(gold_richness)
 	_generate_gold_deposits(deposit_count)
 
-	print("[Terrain] Generated: Seed=%d, Richness=%.2f, Deposits=%d" % [seed_value, gold_richness, deposit_count])
+	# Trigger bedrock visual overlay render
+	queue_redraw()
+
+	print("[Terrain] Generated: Seed=%d, Richness=%.2f, Deposits=%d, Bedrock=%d" % [seed_value, gold_richness, deposit_count, bedrock_tiles.size()])
 
 ## Fill TileMap with layered terrain
+## Side columns (x=0, x=terrain_width-1) are always bedrock walls.
 func _generate_terrain_tiles() -> void:
 	for y in range(terrain_height):
 		for x in range(terrain_width):
 			var depth_factor: float = float(y) / terrain_height
 			var tile_atlas: Vector2i
 
+			# Side walls and bottom layer are always bedrock
+			if x == 0 or x == terrain_width - 1:
+				tile_atlas = TILE_BEDROCK_ATLAS
 			# Stratified layers based on depth
-			if depth_factor < 0.2:
+			elif depth_factor < 0.2:
 				tile_atlas = TILE_DIRT_ATLAS
 			elif depth_factor < 0.85:
 				tile_atlas = TILE_STONE_ATLAS
 			else:
 				tile_atlas = TILE_BEDROCK_ATLAS
 
-			# Add some noise for variation
-			if randf() < 0.1:
-				# Slightly vary the tile (shift to next column in atlas)
+			# Add some noise for variation — only dirt↔stone boundary (never stone→bedrock)
+			if tile_atlas != TILE_BEDROCK_ATLAS and randf() < 0.1:
 				if tile_atlas == TILE_DIRT_ATLAS:
 					tile_atlas = TILE_STONE_ATLAS
-				elif tile_atlas == TILE_STONE_ATLAS:
-					tile_atlas = TILE_BEDROCK_ATLAS
 
 			tilemap.set_cell(0, Vector2i(x, y), 0, tile_atlas)
+
+			# Track bedrock positions for visual overlay
+			if tile_atlas == TILE_BEDROCK_ATLAS:
+				bedrock_tiles.append(Vector2i(x, y))
 
 ## Generate clustered gold deposits
 func _generate_gold_deposits(count: int) -> void:
@@ -114,6 +126,11 @@ func _create_gold_cluster(center: Vector2i, size: int) -> void:
 		if pos.x < 0 or pos.x >= terrain_width or pos.y < 0 or pos.y >= terrain_height:
 			continue
 		if gold_deposits.has(pos):
+			continue
+
+		# Don't place gold in bedrock tiles (side walls, bottom layer)
+		var tile_atlas: Vector2i = tilemap.get_cell_atlas_coords(0, pos)
+		if tile_atlas == TILE_BEDROCK_ATLAS:
 			continue
 
 		# Create deposit
@@ -185,8 +202,8 @@ func highlight_gold_tiles(positions: Array) -> void:
 			indicator_container.add_child(indicator)
 			gold_indicators[pos] = indicator
 
-			# Pulsating animation
-			var tween := create_tween().set_loops()
+			# Pulsating animation — bind tween to indicator so it's freed with it
+			var tween := indicator.create_tween().set_loops()
 			tween.tween_property(indicator, "color:a", 0.2, 0.5)
 			tween.tween_property(indicator, "color:a", 0.5, 0.5)
 
@@ -225,10 +242,25 @@ func _reveal_all_gold() -> void:
 	print("[Debug] Revealed all %d gold deposits" % all_positions.size())
 
 func _draw() -> void:
+	# Always draw bedrock overlay so players can see unbreakable tiles
+	var half := Config.TILE_SIZE * 0.5
+	var bedrock_fill := Color(0.08, 0.04, 0.16, 0.55)   # Dark purple overlay
+	var bedrock_line := Color(0.55, 0.35, 0.75, 0.7)    # Bright purple X marks
+
+	for pos in bedrock_tiles:
+		var lp: Vector2 = tilemap.map_to_local(pos)
+		var tl := lp + Vector2(-half, -half)
+		var br := lp + Vector2(half, half)
+		var tr := lp + Vector2(half, -half)
+		var bl := lp + Vector2(-half, half)
+		draw_rect(Rect2(tl, Vector2(Config.TILE_SIZE, Config.TILE_SIZE)), bedrock_fill)
+		draw_line(tl, br, bedrock_line, 1.0)
+		draw_line(tr, bl, bedrock_line, 1.0)
+
 	if not debug_mode:
 		return
 
-	# Draw circles at all gold deposit positions
+	# Debug: draw circles at all gold deposit positions
 	for pos in gold_deposits.keys():
 		var world_pos: Vector2 = tile_to_world(pos)
 		var local_pos: Vector2 = to_local(world_pos)

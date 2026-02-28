@@ -19,42 +19,87 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.6)
+color = Color(0, 0, 0, 0.75)
 
-[node name="PanelContainer" type="PanelContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -150.0
-offset_right = 200.0
-offset_bottom = 150.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer"]
+[node name="ResultsPanel" type="PanelContainer" parent="CenterContainer"]
 layout_mode = 2
-theme_override_constants/separation = 20
+custom_minimum_size = Vector2(480, 0)
 
-[node name="SummaryLabel" type="Label" parent="PanelContainer/VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/ResultsPanel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Round Complete!"
+theme_override_constants/separation = 16
+
+[node name="HeaderLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "ROUND 1 COMPLETE"
 horizontal_alignment = 1
 
-[node name="GoldLabel" type="Label" parent="PanelContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="CenterContainer/ResultsPanel/VBoxContainer"]
 layout_mode = 2
-text = "Gold Collected: 0"
-horizontal_alignment = 1
 
-[node name="TimeLabel" type="Label" parent="PanelContainer/VBoxContainer"]
+[node name="StatsContainer" type="VBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer"]
 layout_mode = 2
-text = "Time Used: 0.0s"
-horizontal_alignment = 1
+theme_override_constants/separation = 8
 
-[node name="ContinueButton" type="Button" parent="PanelContainer/VBoxContainer"]
+[node name="GoldRow" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer"]
 layout_mode = 2
-text = "Continue"
+
+[node name="GoldKeyLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/GoldRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Gold Collected"
+
+[node name="GoldValueLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/GoldRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "0"
+horizontal_alignment = 2
+
+[node name="TimeRow" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer"]
+layout_mode = 2
+
+[node name="TimeKeyLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/TimeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Time Used"
+
+[node name="TimeValueLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/TimeRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "0.0s"
+horizontal_alignment = 2
+
+[node name="HSeparator2" type="HSeparator" parent="CenterContainer/ResultsPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="GradeContainer" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="GradeLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/GradeContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Efficiency"
+vertical_alignment = 1
+
+[node name="GradeValueLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/GradeContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "B"
+
+[node name="HSeparator3" type="HSeparator" parent="CenterContainer/ResultsPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ContinueButton" type="Button" parent="CenterContainer/ResultsPanel/VBoxContainer"]
+custom_minimum_size = Vector2(320, 52)
+layout_mode = 2
+text = "CONTINUE TO AUCTION"

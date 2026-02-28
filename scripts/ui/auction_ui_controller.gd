@@ -48,6 +48,8 @@ const NPC_COLORS: Dictionary = {
 func _ready() -> void:
 	add_to_group("auction_ui")
 
+	_apply_auction_styles()
+
 	# Connect signals
 	EventBus.money_changed.connect(_on_money_changed)
 	bid_button.pressed.connect(_on_bid_button_pressed)
@@ -83,6 +85,24 @@ func _ready() -> void:
 	info_label.text = "NPCs are choosing their plots..."
 	auction_system.start_npc_turn()
 	# "Your turn!" message is set by _on_npc_turn_finished when all NPCs finish
+
+func _apply_auction_styles() -> void:
+	# Info panel — modal style
+	info_panel.add_theme_stylebox_override("panel", UITheme.modal_style())
+
+	# Title labels with heading font
+	if UITheme.font_heading:
+		title_label.add_theme_font_override("font", UITheme.font_heading)
+		plot_name_label.add_theme_font_override("font", UITheme.font_heading)
+	title_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
+	plot_name_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
+	plot_name_label.add_theme_font_size_override("font_size", 20)
+
+	# Richness accent color
+	richness_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
+
+	# Bid button
+	bid_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
 
 # ============================================================================
 # PLOT SELECTION
@@ -155,7 +175,7 @@ func _animate_money_change(new_amount: int) -> void:
 	money_tween.tween_method(func(v: float):
 		displayed_money = int(v)
 		money_label.text = "Budget: $%d" % displayed_money
-	, float(old_amount), float(new_amount), duration)\
+	, float(old_amount), float(new_amount), duration) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 
 	var flash_color := Color(0.3, 1.0, 0.3) if gained else Color(1.0, 0.3, 0.3)
@@ -186,17 +206,7 @@ func _create_npc_panel() -> void:
 	npc_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	npc_panel.size_flags_vertical = Control.SIZE_SHRINK_END
 	npc_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 16)
-
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.07, 0.12, 0.92)
-	style.border_color = Color(1.0, 0.6, 0.1, 0.9)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(8)
-	style.content_margin_left = 10
-	style.content_margin_right = 12
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
-	npc_panel.add_theme_stylebox_override("panel", style)
+	npc_panel.add_theme_stylebox_override("panel", UITheme.npc_panel_style())
 
 	var hbox = HBoxContainer.new()
 	hbox.add_theme_constant_override("separation", 10)
@@ -210,10 +220,10 @@ func _create_npc_panel() -> void:
 	npc_avatar_label.add_theme_font_size_override("font_size", 22)
 
 	var avatar_style = StyleBoxFlat.new()
-	avatar_style.bg_color = Color(0.3, 0.3, 0.35)
+	avatar_style.bg_color = UITheme.COLOR_SURFACE_LIGHT
 	avatar_style.set_corner_radius_all(26)
 	avatar_style.set_border_width_all(2)
-	avatar_style.border_color = Color(1.0, 0.6, 0.1, 0.8)
+	avatar_style.border_color = Color(UITheme.COLOR_GOLD_PRIMARY.r, UITheme.COLOR_GOLD_PRIMARY.g, UITheme.COLOR_GOLD_PRIMARY.b, 0.8)
 	npc_avatar_label.add_theme_stylebox_override("normal", avatar_style)
 	hbox.add_child(npc_avatar_label)
 
@@ -223,12 +233,12 @@ func _create_npc_panel() -> void:
 
 	npc_name_label = Label.new()
 	npc_name_label.add_theme_font_size_override("font_size", 13)
-	npc_name_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+	npc_name_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
 	vbox.add_child(npc_name_label)
 
 	npc_status_label = Label.new()
 	npc_status_label.add_theme_font_size_override("font_size", 11)
-	npc_status_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
+	npc_status_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_MUTED)
 	npc_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	npc_status_label.custom_minimum_size = Vector2(120, 0)
 	vbox.add_child(npc_status_label)

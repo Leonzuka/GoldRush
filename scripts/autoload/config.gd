@@ -83,3 +83,18 @@ func get_npc_aggression(round_number: int) -> float:
 func get_deposit_count(richness: float) -> int:
 	var base_count: float = float(MIN_GOLD_DEPOSITS + MAX_GOLD_DEPOSITS) / 2.0
 	return int(base_count * richness)
+
+# ============================================================================
+# UI COLOR CONSTANTS (mirrors UITheme palette for code without UITheme dep)
+# ============================================================================
+
+const UI_COLOR_BG_DEEP       := Color(0.102, 0.051, 0.024)  # #1A0D06
+const UI_COLOR_BG_SURFACE    := Color(0.176, 0.082, 0.031)  # #2D1508
+const UI_COLOR_SURFACE_LIGHT := Color(0.420, 0.188, 0.063)  # #6B3010
+const UI_COLOR_GOLD_PRIMARY  := Color(0.784, 0.573, 0.165)  # #C8922A
+const UI_COLOR_GOLD_BRIGHT   := Color(0.941, 0.753, 0.376)  # #F0C060
+const UI_COLOR_TEXT_WARM     := Color(0.961, 0.871, 0.702)  # #F5DEB3
+const UI_COLOR_TEXT_MUTED    := Color(0.753, 0.627, 0.376)  # #C0A060
+const UI_COLOR_DANGER        := Color(0.545, 0.125, 0.125)  # #8B2020
+const UI_COLOR_SUCCESS       := Color(0.165, 0.420, 0.125)  # #2A6B20
+const UI_COLOR_BORDER_GOLD   := Color(0.545, 0.412, 0.078)  # #8B6914

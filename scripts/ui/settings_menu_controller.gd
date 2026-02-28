@@ -38,6 +38,8 @@ const DEFAULT_MUSIC_VOLUME: float = 80.0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
+	_apply_settings_styles()
+
 	# Connect signals
 	fullscreen_checkbox.toggled.connect(_on_fullscreen_toggled)
 	master_slider.value_changed.connect(_on_master_volume_changed)
@@ -48,6 +50,31 @@ func _ready() -> void:
 
 	# Load and apply settings
 	load_settings()
+
+func _apply_settings_styles() -> void:
+	var panel: PanelContainer = $PanelContainer
+	panel.add_theme_stylebox_override("panel", UITheme.modal_style())
+
+	var title_label: Label = $PanelContainer/VBoxContainer/TitleLabel
+	if UITheme.font_heading:
+		title_label.add_theme_font_override("font", UITheme.font_heading)
+	title_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
+
+	# Section headers
+	var section_label_paths := [
+		"PanelContainer/VBoxContainer/DisplaySection/SectionLabel",
+		"PanelContainer/VBoxContainer/AudioSection/SectionLabel",
+	]
+	for path in section_label_paths:
+		var lbl := get_node_or_null(path)
+		if lbl:
+			if UITheme.font_heading:
+				lbl.add_theme_font_override("font", UITheme.font_heading)
+			lbl.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
+
+	# Buttons
+	close_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
+	reset_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
 
 # ============================================================================
 # SETTINGS PERSISTENCE

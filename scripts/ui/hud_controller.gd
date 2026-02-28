@@ -6,10 +6,10 @@ extends Control
 # NODES
 # ============================================================================
 
-@onready var round_label: Label = $TopBar/RoundLabel
-@onready var time_label: Label = $TopBar/TimeLabel
-@onready var money_label: Label = $TopBar/MoneyLabel
-@onready var gold_label: Label = $BottomBar/GoldLabel
+@onready var round_label: Label = $TopBar/RoundChip/RoundLabel
+@onready var time_label: Label = $TopBar/TimeChip/TimeLabel
+@onready var money_label: Label = $TopBar/MoneyChip/MoneyLabel
+@onready var gold_label: Label = $BottomBar/GoldChip/GoldLabel
 @onready var storage_bar: ProgressBar = $BottomBar/StorageBar
 @onready var scan_button: Button = $BottomBar/ScanButton
 
@@ -29,6 +29,8 @@ var _scanner_cooldown: float = 0.0
 # ============================================================================
 
 func _ready() -> void:
+	_apply_styles()
+
 	EventBus.session_time_updated.connect(_on_time_updated)
 	EventBus.resource_storage_changed.connect(_on_storage_changed)
 	EventBus.money_changed.connect(_on_money_changed)
@@ -43,6 +45,21 @@ func _ready() -> void:
 	# Initialize display
 	update_round_display()
 	update_money_display()
+
+func _apply_styles() -> void:
+	# Chip containers
+	$TopBar/RoundChip.add_theme_stylebox_override("panel", UITheme.chip_style())
+	$TopBar/TimeChip.add_theme_stylebox_override("panel", UITheme.chip_style())
+	$TopBar/MoneyChip.add_theme_stylebox_override("panel", UITheme.chip_style())
+	$BottomBar/GoldChip.add_theme_stylebox_override("panel", UITheme.chip_style())
+
+	# Scan button
+	scan_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
+
+	# Bold font on time label
+	if UITheme.font_body_bold:
+		time_label.add_theme_font_override("font", UITheme.font_body_bold)
+		money_label.add_theme_font_override("font", UITheme.font_body_bold)
 
 ## Setup tooltips for UI elements
 func _setup_tooltips() -> void:
@@ -67,13 +84,13 @@ func update_round_display() -> void:
 func update_money_display() -> void:
 	displayed_money = GameManager.player_money
 	target_money = displayed_money
-	money_label.text = "Money: $%d" % displayed_money
+	money_label.text = "$ %d" % displayed_money
 
 func _on_time_updated(time_remaining: float) -> void:
 	var total_seconds: int = int(time_remaining)
 	var minutes: int = total_seconds / 60
 	var seconds: int = total_seconds % 60
-	time_label.text = "Time: %02d:%02d" % [minutes, seconds]
+	time_label.text = "%02d:%02d" % [minutes, seconds]
 
 func _on_storage_changed(current: int, max_capacity: int) -> void:
 	gold_label.text = "Gold: %d/%d" % [current, max_capacity]
@@ -115,7 +132,7 @@ func _on_scanner_cooldown_changed(remaining: float) -> void:
 		scan_button.text = "SCAN [E]"
 
 # ============================================================================
-# MONEY ANIMATION
+# MONEY ANIMATION  — DO NOT MODIFY
 # ============================================================================
 
 ## Animate money counter from current displayed value to new target
@@ -134,7 +151,7 @@ func _animate_money_change(new_amount: int) -> void:
 	var duration := clampf(diff / 500.0, 0.3, 1.2)
 
 	money_tween = create_tween()
-	money_tween.tween_method(_update_money_text, float(old_amount), float(new_amount), duration)\
+	money_tween.tween_method(_update_money_text, float(old_amount), float(new_amount), duration) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 
 	# Color flash: green for gain, red for loss
@@ -145,12 +162,12 @@ func _animate_money_change(new_amount: int) -> void:
 
 	# Scale punch effect
 	var punch_tween := create_tween()
-	punch_tween.tween_property(money_label, "scale", Vector2(1.2, 1.2), 0.1)\
+	punch_tween.tween_property(money_label, "scale", Vector2(1.2, 1.2), 0.1) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	punch_tween.tween_property(money_label, "scale", Vector2.ONE, 0.25)\
+	punch_tween.tween_property(money_label, "scale", Vector2.ONE, 0.25) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
 
-## Callback for money counting tween - updates label each frame
+## Callback for money counting tween — updates label each frame
 func _update_money_text(value: float) -> void:
 	displayed_money = int(value)
-	money_label.text = "Money: $%d" % displayed_money
+	money_label.text = "$ %d" % displayed_money

@@ -27,6 +27,8 @@ func _ready() -> void:
 	# Set process mode to continue running when paused
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
+	_apply_pause_styles()
+
 	# Connect buttons
 	resume_button.pressed.connect(_on_resume_pressed)
 	help_button.pressed.connect(_on_help_pressed)
@@ -36,6 +38,26 @@ func _ready() -> void:
 	# Connect to EventBus
 	EventBus.game_paused.connect(_on_game_paused)
 	EventBus.game_resumed.connect(_on_game_resumed)
+
+func _apply_pause_styles() -> void:
+	var panel: PanelContainer = $PanelContainer
+	panel.add_theme_stylebox_override("panel", UITheme.modal_style())
+
+	# Header
+	var title_label: Label = $PanelContainer/VBoxContainer/TitleLabel
+	if UITheme.font_heading:
+		title_label.add_theme_font_override("font", UITheme.font_heading)
+	title_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
+
+	# Action buttons
+	resume_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
+	help_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
+	settings_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
+
+	# Quit button — danger-tinted
+	var quit_style := UITheme.action_button_style()
+	quit_style.border_color = UITheme.COLOR_DANGER
+	quit_button.add_theme_stylebox_override("normal", quit_style)
 
 # ============================================================================
 # INPUT HANDLING
@@ -64,11 +86,28 @@ func pause_game() -> void:
 	get_tree().paused = true
 	visible = true
 	EventBus.game_paused.emit()
+	_play_show_animation()
 
 func resume_game() -> void:
 	get_tree().paused = false
 	visible = false
 	EventBus.game_resumed.emit()
+
+## Scale-in pop animation when pause menu is shown
+func _play_show_animation() -> void:
+	await get_tree().process_frame  # Ensure layout has run
+
+	var panel: PanelContainer = $PanelContainer
+	var size := panel.get_rect().size
+	panel.pivot_offset = size / 2.0 if size != Vector2.ZERO else Vector2(125, 150)
+	panel.scale = Vector2(0.85, 0.85)
+	panel.modulate.a = 0.0
+
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(panel, "scale", Vector2.ONE, 0.25) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(panel, "modulate:a", 1.0, 0.2) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 # ============================================================================
 # BUTTON HANDLERS
