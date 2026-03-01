@@ -2,7 +2,6 @@
 
 ## 🔴 Tarefas Imediatas (Sprint Atual)
 - Terras indisponíveis quando um NPC escolhe - add um minigame
-- Melhorar a animação do PinPoint dso NPCS
 - Remover o círculo delimitando a área de mineração.
 
 ### Gameplay Core & Balanceamento
@@ -59,7 +58,6 @@
 - [ ] Efeito de particulas ao cavar bedrock (faiscas de impacto)
 - [ ] Parallax background na cena de mineracao (ceu, nuvens)
 - [ ] Melhorar sprite do Gold Nugget (atual e um circulo com glow)
-- Gerar os imagens de PERFIL dos NPCS -Manter concistencia 
 
 ### Audio
 - [ ] Sons de escavacao (dirt vs stone vs bedrock, variacoes)

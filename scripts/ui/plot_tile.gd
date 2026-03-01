@@ -36,11 +36,20 @@ static func request_preload() -> void:
 		var path = "res://assets/sprites/gold_mine_animated/without ground/gold_mine%04d.png" % i
 		ResourceLoader.load_threaded_request(path, "Texture2D", false, ResourceLoader.CACHE_MODE_REUSE)
 
+const NPC_IMAGES: Dictionary = {
+	"Big Bob":   "res://assets/sprites/NPC's/BigBob.png",
+	"Sly Sally": "res://assets/sprites/NPC's/SlySally.png",
+	"Mad Max":   "res://assets/sprites/NPC's/MadMAx.png",
+}
+
 var is_hovered: bool = false
 var hover_tween: Tween
 var pulse_tween: Tween
 var pin_tween: Tween
-var npc_pin: Label
+var npc_pin: PanelContainer
+var npc_pin_style: StyleBoxFlat
+var npc_pin_avatar: TextureRect
+var npc_pin_label: Label
 var name_label: Label
 
 func _input(event: InputEvent) -> void:
@@ -128,8 +137,8 @@ func _setup_mine_sprite() -> void:
 	# Frames are 1920×1080 — scale down to fit the isometric diamond (128×64)
 	const FRAME_W: float = 1920.0
 	const FRAME_H: float = 1080.0
-	var scale_x = Config.ISO_TILE_WIDTH * 0.84 / FRAME_W
-	var scale_y = Config.ISO_TILE_HEIGHT * 1.08 / FRAME_H
+	var scale_x = Config.ISO_TILE_WIDTH * 1 / FRAME_W
+	var scale_y = Config.ISO_TILE_HEIGHT * 1 / FRAME_H
 	owner_flag.scale = Vector2.ONE * min(scale_x, scale_y)
 	owner_flag.position = Vector2.ZERO
 	owner_flag.visible = false
@@ -253,10 +262,11 @@ func update_visual_state() -> void:
 			is_hovered = false
 			modulate = Color(0.6, 0.6, 0.7)
 			scale = Vector2.ONE
+			var npc_border_color: Color = Config.NPC_COLORS.get(plot_data.owner_name, UITheme.COLOR_DANGER)
 			border_line.width = 2.0
-			border_line.default_color = UITheme.COLOR_DANGER
+			border_line.default_color = npc_border_color
 			depth_border_line.width = 2.0
-			depth_border_line.default_color = UITheme.COLOR_DANGER
+			depth_border_line.default_color = npc_border_color
 			owner_flag.visible = true
 			owner_flag.modulate = Color.WHITE
 			owner_flag.play("default")
@@ -315,35 +325,70 @@ func _on_mouse_exited() -> void:
 	is_hovered = false
 	update_visual_state()
 
-## Creates the NPC pinpoint label positioned above the tile
+## Creates the NPC pinpoint panel positioned above the tile
 func _setup_npc_pin() -> void:
-	npc_pin = Label.new()
+	npc_pin = PanelContainer.new()
 	npc_pin.visible = false
 	npc_pin.z_index = 10
-	npc_pin.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	npc_pin.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	npc_pin.position = Vector2(-50, -Config.ISO_TILE_HEIGHT - 28)
-	npc_pin.custom_minimum_size = Vector2(100, 28)
+	# Center the 130px-wide pin horizontally over the tile's top vertex
+	# Tile top vertex is at (0, -ISO_TILE_HEIGHT/2) = (0, -32)
+	# Pin sits 8px above that, pinning bottom edge at -40 for a ~30px tall container
+	npc_pin.position = Vector2(-65, -float(Config.ISO_TILE_HEIGHT) / 2.0 - 38.0)
+	npc_pin.custom_minimum_size = Vector2(130, 30)
 
-	# Style the pin background
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(UITheme.COLOR_BG_DEEP.r, UITheme.COLOR_BG_DEEP.g, UITheme.COLOR_BG_DEEP.b, 0.85)
-	style.border_color = UITheme.COLOR_GOLD_PRIMARY
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 6
-	style.content_margin_right = 6
-	npc_pin.add_theme_stylebox_override("normal", style)
-	npc_pin.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
-	npc_pin.add_theme_font_size_override("font_size", 11)
+	npc_pin_style = StyleBoxFlat.new()
+	npc_pin_style.bg_color = Color(UITheme.COLOR_BG_DEEP.r, UITheme.COLOR_BG_DEEP.g, UITheme.COLOR_BG_DEEP.b, 0.90)
+	npc_pin_style.border_color = UITheme.COLOR_GOLD_PRIMARY  # updated per-NPC in show_npc_pin()
+	npc_pin_style.set_border_width_all(2)
+	npc_pin_style.set_corner_radius_all(6)
+	npc_pin_style.content_margin_left = 5
+	npc_pin_style.content_margin_right = 8
+	npc_pin_style.content_margin_top = 4
+	npc_pin_style.content_margin_bottom = 4
+	npc_pin.add_theme_stylebox_override("panel", npc_pin_style)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 5)
+	npc_pin.add_child(hbox)
+
+	# NPC avatar portrait (circle-clipped via shader)
+	npc_pin_avatar = TextureRect.new()
+	npc_pin_avatar.custom_minimum_size = Vector2(22, 22)
+	npc_pin_avatar.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	npc_pin_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	npc_pin_avatar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pin_shader := Shader.new()
+	pin_shader.code = "shader_type canvas_item;\nvoid fragment() {\n\tvec2 uv = UV - vec2(0.5);\n\tif (length(uv) > 0.5) { discard; }\n\tCOLOR = texture(TEXTURE, UV);\n}"
+	var pin_mat := ShaderMaterial.new()
+	pin_mat.shader = pin_shader
+	npc_pin_avatar.material = pin_mat
+	hbox.add_child(npc_pin_avatar)
+
+	# NPC name text
+	npc_pin_label = Label.new()
+	npc_pin_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	npc_pin_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
+	npc_pin_label.add_theme_font_size_override("font_size", 11)
+	npc_pin_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hbox.add_child(npc_pin_label)
 
 	add_child(npc_pin)
 
 ## Shows the NPC pinpoint marker with an animated pop-in
 func show_npc_pin(npc_name: String) -> void:
-	npc_pin.text = "📍 %s" % npc_name
+	npc_pin_label.text = npc_name
+	var img_path: String = NPC_IMAGES.get(npc_name, "")
+	if img_path:
+		var tex := load(img_path) as Texture2D
+		if tex:
+			npc_pin_avatar.texture = tex
+	# Tint border and label with the NPC's personal color
+	var npc_color: Color = Config.NPC_COLORS.get(npc_name, UITheme.COLOR_GOLD_PRIMARY)
+	npc_pin_style.border_color = npc_color
+	npc_pin_label.add_theme_color_override("font_color", npc_color.lightened(0.3))
 	npc_pin.visible = true
 	npc_pin.scale = Vector2(0.3, 0.3)
+	npc_pin.pivot_offset = Vector2(65.0, 15.0)
 	npc_pin.modulate = Color(1, 1, 1, 0)
 
 	if pin_tween and pin_tween.is_valid():

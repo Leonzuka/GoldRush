@@ -98,7 +98,9 @@ func _center_camera() -> void:
 	# Center between first and last tile for better framing
 	@warning_ignore("integer_division")
 	var center = Vector2i(Config.AUCTION_MAP_COLS / 2, Config.AUCTION_MAP_ROWS / 2)
-	camera.position = _grid_to_iso(center)
+	# Shift camera left so terrain appears shifted right on screen
+	# (accounts for the wider left sidebar vs right sidebar)
+	camera.position = _grid_to_iso(center) + Vector2(-20, 0)
 	camera.zoom = Vector2(1.8, 1.8)  # Zoom in to make tiles readable
 	camera.enabled = true
 	camera.make_current()

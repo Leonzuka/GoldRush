@@ -31,11 +31,11 @@ var displayed_money: int = 0
 var npc_roster: PanelContainer
 var npc_entries: Dictionary = {}  # name → {container, avatar, status_lbl, claimed}
 
-# NPC avatar colors matching personality
-const NPC_COLORS: Dictionary = {
-	"Big Bob":   Color(0.9, 0.5, 0.1),
-	"Sly Sally": Color(0.6, 0.2, 0.8),
-	"Mad Max":   Color(0.9, 0.15, 0.15),
+# NPC portrait images
+const NPC_IMAGES: Dictionary = {
+	"Big Bob":   "res://assets/sprites/NPC's/BigBob.png",
+	"Sly Sally": "res://assets/sprites/NPC's/SlySally.png",
+	"Mad Max":   "res://assets/sprites/NPC's/MadMAx.png",
 }
 
 # ============================================================================
@@ -361,8 +361,7 @@ func _create_npc_roster() -> void:
 
 ## Creates a single NPC entry row for the roster
 func _create_npc_entry(npc_name: String) -> Dictionary:
-	var color = NPC_COLORS.get(npc_name, Color(0.4, 0.6, 0.9))
-	var initials = _get_initials(npc_name)
+	var color = Config.NPC_COLORS.get(npc_name, Color(0.4, 0.6, 0.9))
 
 	# Outer container with rounded background
 	var container = PanelContainer.new()
@@ -381,20 +380,40 @@ func _create_npc_entry(npc_name: String) -> Dictionary:
 	hbox.add_theme_constant_override("separation", 10)
 	container.add_child(hbox)
 
-	# Avatar circle
-	var avatar = Label.new()
-	avatar.text = initials
-	avatar.custom_minimum_size = Vector2(40, 40)
-	avatar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	avatar.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	avatar.add_theme_font_size_override("font_size", 16)
-	avatar.add_theme_color_override("font_color", color.lightened(0.3))
+	# Avatar — circular portrait with NPC image (48×48)
 	var avatar_style = StyleBoxFlat.new()
 	avatar_style.bg_color = Color(color.r * 0.25, color.g * 0.25, color.b * 0.25, 1.0)
-	avatar_style.set_corner_radius_all(20)
+	avatar_style.set_corner_radius_all(24)
 	avatar_style.set_border_width_all(2)
 	avatar_style.border_color = Color(color.r, color.g, color.b, 0.8)
-	avatar.add_theme_stylebox_override("normal", avatar_style)
+
+	var avatar_bg = Panel.new()
+	avatar_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	avatar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	avatar_bg.add_theme_stylebox_override("panel", avatar_style)
+
+	var avatar = Control.new()
+	avatar.custom_minimum_size = Vector2(48, 48)
+	avatar.add_child(avatar_bg)
+
+	var img_path: String = NPC_IMAGES.get(npc_name, "")
+	if img_path:
+		var tex := load(img_path) as Texture2D
+		if tex:
+			var avatar_tex := TextureRect.new()
+			avatar_tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			avatar_tex.texture = tex
+			avatar_tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+			avatar_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+			avatar_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			# Shader clips the square image to a circle
+			var shader := Shader.new()
+			shader.code = "shader_type canvas_item;\nvoid fragment() {\n\tvec2 uv = UV - vec2(0.5);\n\tif (length(uv) > 0.5) { discard; }\n\tCOLOR = texture(TEXTURE, UV);\n}"
+			var mat := ShaderMaterial.new()
+			mat.shader = shader
+			avatar_tex.material = mat
+			avatar.add_child(avatar_tex)
+
 	hbox.add_child(avatar)
 
 	# Name + status column

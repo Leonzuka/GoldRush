@@ -58,6 +58,11 @@ const ISO_TILE_DEPTH: int = 32    # Visual depth for 2.5D effect
 const NPC_COUNT_PER_AUCTION: int = 3
 const NPC_BID_DELAY: float = 0.8  # Seconds between NPC actions
 const NPC_NAMES: Array[String] = ["Big Bob", "Sly Sally", "Mad Max"]
+const NPC_COLORS: Dictionary = {
+	"Big Bob":   Color(0.9, 0.5, 0.1),
+	"Sly Sally": Color(0.6, 0.2, 0.8),
+	"Mad Max":   Color(0.9, 0.15, 0.15),
+}
 
 # Legacy NPC aggression (kept for compatibility)
 const NPC_BASE_AGGRESSION: float = 0.2  # 20% chance to outbid
