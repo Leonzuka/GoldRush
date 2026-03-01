@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://nqd7yqntasga"
-path="res://.godot/imported/Gold_Mine.jpeg-5a4ffb381370282329c7d0a915fe3ec1.ctex"
+uid="uid://cn66xf68tdmmb"
+path="res://.godot/imported/gold_mine0021.png-2447d406fdb8db4e82e6bd7207f74828.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/Gold_Mine.jpeg"
-dest_files=["res://.godot/imported/Gold_Mine.jpeg-5a4ffb381370282329c7d0a915fe3ec1.ctex"]
+source_file="res://assets/sprites/gold_mine_animated/without ground/gold_mine0021.png"
+dest_files=["res://.godot/imported/gold_mine0021.png-2447d406fdb8db4e82e6bd7207f74828.ctex"]
 
 [params]
 

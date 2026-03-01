@@ -2,11 +2,11 @@
 
 ## 🔴 Tarefas Imediatas (Sprint Atual)
 - Terras indisponíveis quando um NPC escolhe - add um minigame
+- Melhorar a animação do PinPoint dso NPCS
+- Remover o círculo delimitando a área de mineração.
 
-### Gameplay Core
+### Gameplay Core & Balanceamento
 - [ ] Validar balanceamento de dificuldade dos plots
-
-### Balanceamento
 - [ ] Testar curva de dificuldade: rounds 1-5 devem ser progressivamente mais dificeis
 - [ ] Validar que 25-50 depositos por plot gera gameplay de ~2 minutos satisfatorio
 
@@ -55,15 +55,15 @@
 ### Visual
 - [ ] Shader de escavacao suave (ja existe em `shaders/terrain_dig.gdshader`)
 - [ ] Assets artisticos (substituir placeholders)
-- [ ] Indicador visual de progresso de drill (barra de progresso no tile)
+- [ ] Indicador visual de progresso de drill - Sprite rachando
 - [ ] Efeito de particulas ao cavar bedrock (faiscas de impacto)
 - [ ] Parallax background na cena de mineracao (ceu, nuvens)
 - [ ] Melhorar sprite do Gold Nugget (atual e um circulo com glow)
+- Gerar os imagens de PERFIL dos NPCS -Manter concistencia 
 
 ### Audio
-- [ ] Sons de escavacao (dirt vs stone, variacoes)
+- [ ] Sons de escavacao (dirt vs stone vs bedrock, variacoes)
 - [ ] Som de coleta de ouro (coin pickup satisfatorio)
-- [ ] Som do scanner (ping/sonar)
 - [ ] Musica de fundo (menu) - loop ambiente
 - [ ] Musica de fundo (leilao) - tensao crescente
 - [ ] Musica de fundo (mineracao) - ritmo exploratorio
@@ -82,10 +82,9 @@
 
 ### Eventos Especiais
 - [ ] Gold Rush (ouro temporariamente mais valioso)
-- [ ] Desmoronamento (area do mapa fica inacessivel)
+- [ ] Desmoronamento (area do mapa fica inacessivel)?
 - [ ] Descoberta arqueologica (bonus de valor)
-- [ ] Tempestade (dificulta movimento)
-- [ ] Veio de Ouro (deposito gigante raro com 200+ ouro)
+- [ ] Ouro dos tolos?
 
 ### NPCs e Competicao
 - [ ] Sistema de sabotagem/interacao com rivais
@@ -121,7 +120,5 @@
 - Minigames durante o leilao (queda de braco, dado, etc)
 - Customizacao visual do personagem (chapeus, picaretas, roupas)
 - Ferramentas especiais (dinamite abre 3x3, aspirador de ouro coleta a distancia)
-- Sistema de mapa mundial (diferentes regioes com biomas e recursos unicos)
-- Clima dinamico que afeta mineracao (chuva = lama escorregadia, sol = sede)
-- Sistema de fadiga do player (precisa descansar apos X minutos)
+- Sistema de fadiga do player (precisa descansar apos X segundos)
 - Mercado negro com itens raros e ilegais (risco/recompensa)

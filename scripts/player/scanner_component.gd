@@ -23,6 +23,7 @@ var player: CharacterBody2D
 
 var is_ready_to_scan: bool = true
 var cooldown_timer: Timer
+var ping_player: AudioStreamPlayer
 
 # Debug state
 var f3_was_pressed: bool = false
@@ -44,6 +45,11 @@ func _ready() -> void:
 	cooldown_timer.one_shot = true
 	cooldown_timer.timeout.connect(_on_cooldown_finished)
 	add_child(cooldown_timer)
+
+	# Setup ping sound
+	ping_player = AudioStreamPlayer.new()
+	ping_player.stream = load("res://assets/sounds/ping_sound.mp3")
+	add_child(ping_player)
 
 # ============================================================================
 # SCANNING
@@ -89,6 +95,10 @@ func perform_scan() -> Array:
 	EventBus.gold_detected.emit(detected_deposits)
 	terrain_manager.highlight_gold_tiles(detected_deposits)
 
+	# Play one ping per deposit found
+	if detected_deposits.size() > 0:
+		_play_pings(detected_deposits.size())
+
 	# Visual scan effect
 	var scan_effect := Node2D.new()
 	scan_effect.set_script(preload("res://scripts/effects/scan_effect.gd"))
@@ -98,6 +108,13 @@ func perform_scan() -> Array:
 
 	print("[Scanner] Detected %d deposits" % detected_deposits.size())
 	return detected_deposits
+
+func _play_pings(count: int) -> void:
+	for i in count:
+		ping_player.pitch_scale = 1.0 + i * 0.15
+		ping_player.play()
+		await get_tree().create_timer(0.15).timeout
+	ping_player.pitch_scale = 1.0
 
 func _on_cooldown_finished() -> void:
 	is_ready_to_scan = true

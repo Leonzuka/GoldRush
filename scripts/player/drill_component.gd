@@ -70,7 +70,30 @@ func _process(delta: float) -> void:
 		is_out_of_range = false
 		reset_drill()
 
+## Returns true if there is no solid tile blocking the path to target_tile
+func _has_line_of_sight(target_tile: Vector2i) -> bool:
+	var to_pos: Vector2 = terrain_manager.tile_to_world(target_tile)
+	var space_state = player.get_world_2d().direct_space_state
+	var query = PhysicsRayQueryParameters2D.create(
+		player.global_position,
+		to_pos,
+		0xFFFFFFFF,
+		[player.get_rid()]
+	)
+	var result = space_state.intersect_ray(query)
+	if result.is_empty():
+		return true
+	# Move slightly past the hit surface to identify which tile was hit
+	var direction: Vector2 = (to_pos - player.global_position).normalized()
+	var hit_tile: Vector2i = terrain_manager.world_to_tile(result.position + direction * 2.0)
+	return hit_tile == target_tile
+
 func attempt_drill(tile_pos: Vector2i, delta: float) -> void:
+	# Block drilling through other tiles
+	if not _has_line_of_sight(tile_pos):
+		reset_drill()
+		return
+
 	# Reset progress if targeting new tile
 	if current_target_tile != tile_pos:
 		current_target_tile = tile_pos

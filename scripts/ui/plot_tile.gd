@@ -18,15 +18,30 @@ signal hovered(plot_tile: PlotTile)
 @onready var left_depth_polygon: Polygon2D = $LeftDepthPolygon
 @onready var depth_border_line: Line2D = $DepthBorderLine
 @onready var border_line: Line2D = $BorderLine
-@onready var owner_flag: Sprite2D = $OwnerFlag
+@onready var owner_flag: AnimatedSprite2D = $OwnerFlag
 @onready var area: Area2D = $Area2D
 @onready var collision: CollisionPolygon2D = $Area2D/CollisionPolygon2D
+
+static var _mine_frames: SpriteFrames = null
+static var _preload_started: bool = false
+
+## Kick off background loading of all 140 mine frames.
+## Call this as early as possible (e.g. IsometricMapController._ready())
+## so frames are ready by the time tiles are actually owned and displayed.
+static func request_preload() -> void:
+	if _preload_started:
+		return
+	_preload_started = true
+	for i in range(1, 141):
+		var path = "res://assets/sprites/gold_mine_animated/without ground/gold_mine%04d.png" % i
+		ResourceLoader.load_threaded_request(path, "Texture2D", false, ResourceLoader.CACHE_MODE_REUSE)
 
 var is_hovered: bool = false
 var hover_tween: Tween
 var pulse_tween: Tween
 var pin_tween: Tween
 var npc_pin: Label
+var name_label: Label
 
 func _input(event: InputEvent) -> void:
 	if not plot_data:
@@ -71,6 +86,7 @@ func _ready() -> void:
 	_setup_geometry()
 	_setup_input()
 	_setup_npc_pin()
+	_setup_name_label()
 
 	# Load Gold Mine sprite (now using .jpeg extension)
 	_setup_mine_sprite()
@@ -84,28 +100,39 @@ func _ready() -> void:
 		print("[PlotTile] Area2D pickable: " + str(area.input_pickable) + ", monitoring: " + str(area.monitoring))
 		print("[PlotTile] CollisionPolygon2D points: " + str(collision.polygon.size()))
 
-## Setup Gold Mine sprite to fill the isometric tile
+## Setup Gold Mine animated sprite to fill the isometric tile
+## Builds a shared SpriteFrames once (static) and reuses across all PlotTile instances
 func _setup_mine_sprite() -> void:
-	var sprite_path = "res://assets/sprites/Gold_Mine.jpeg"
-	var texture = load(sprite_path)
+	if _mine_frames == null:
+		_mine_frames = SpriteFrames.new()
+		# SpriteFrames.new() already provides "default" animation in Godot 4
+		_mine_frames.set_animation_loop("default", true)
+		_mine_frames.set_animation_speed("default", 24.0)
 
-	if texture:
-		owner_flag.texture = texture
-
-		# Scale sprite to fit inside the isometric diamond (128x64)
-		var tex_size = texture.get_size()
-		var scale_x = Config.ISO_TILE_WIDTH * 0.7 / tex_size.x
-		var scale_y = Config.ISO_TILE_HEIGHT * 0.9 / tex_size.y
-		var scale_factor = min(scale_x, scale_y)
-
-		owner_flag.scale = Vector2(scale_factor, scale_factor)
-		owner_flag.position = Vector2.ZERO  # Centered on the diamond
-		owner_flag.visible = false  # Hidden until owned
+		for i in range(1, 141):
+			var path = "res://assets/sprites/gold_mine_animated/without ground/gold_mine%04d.png" % i
+			# Use threaded get if preload was requested, otherwise fall back to sync load
+			var texture: Texture2D
+			if _preload_started:
+				texture = ResourceLoader.load_threaded_get(path)
+			else:
+				texture = load(path)
+			if texture:
+				_mine_frames.add_frame("default", texture)
 
 		if OS.is_debug_build():
-			print("[PlotTile] Gold Mine sprite loaded: scale=%.2f" % scale_factor)
-	else:
-		push_error("[PlotTile] Failed to load Gold_Mine.jpeg")
+			print("[PlotTile] Gold Mine frames loaded: %d" % _mine_frames.get_frame_count("default"))
+
+	owner_flag.sprite_frames = _mine_frames
+
+	# Frames are 1920×1080 — scale down to fit the isometric diamond (128×64)
+	const FRAME_W: float = 1920.0
+	const FRAME_H: float = 1080.0
+	var scale_x = Config.ISO_TILE_WIDTH * 0.84 / FRAME_W
+	var scale_y = Config.ISO_TILE_HEIGHT * 1.08 / FRAME_H
+	owner_flag.scale = Vector2.ONE * min(scale_x, scale_y)
+	owner_flag.position = Vector2.ZERO
+	owner_flag.visible = false
 
 ## Creates isometric diamond geometry for the tile
 func _setup_geometry() -> void:
@@ -168,6 +195,28 @@ func _setup_input() -> void:
 	area.mouse_entered.connect(_on_mouse_entered)
 	area.mouse_exited.connect(_on_mouse_exited)
 
+## Creates a small hover label showing the plot name on the ground face
+func _setup_name_label() -> void:
+	name_label = Label.new()
+	name_label.z_index = 5
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.position = Vector2(-35, 22)
+	name_label.custom_minimum_size = Vector2(70, 0)
+	name_label.add_theme_font_size_override("font_size", 7)
+	name_label.visible = false
+
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.03, 0.01, 0.82)
+	style.set_corner_radius_all(3)
+	style.content_margin_left = 4
+	style.content_margin_right = 4
+	style.content_margin_top = 2
+	style.content_margin_bottom = 2
+	name_label.add_theme_stylebox_override("normal", style)
+	name_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.55))
+	add_child(name_label)
+
 ## Updates visual appearance based on plot state
 func update_visual_state() -> void:
 	if not plot_data:
@@ -188,11 +237,17 @@ func update_visual_state() -> void:
 	# State-based modulation
 	match plot_data.owner_type:
 		PlotData.OwnerType.AVAILABLE:
+			owner_flag.visible = false
 			if is_hovered:
 				_animate_hover_in()
+				if name_label:
+					name_label.text = plot_data.plot_name
+					name_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.55))
+					name_label.visible = true
 			else:
 				_animate_hover_out()
-			owner_flag.visible = false
+				if name_label:
+					name_label.visible = false
 
 		PlotData.OwnerType.NPC:
 			is_hovered = false
@@ -203,7 +258,12 @@ func update_visual_state() -> void:
 			depth_border_line.width = 2.0
 			depth_border_line.default_color = UITheme.COLOR_DANGER
 			owner_flag.visible = true
-			owner_flag.modulate = Color(UITheme.COLOR_DANGER.r, UITheme.COLOR_DANGER.g, UITheme.COLOR_DANGER.b, 0.8)
+			owner_flag.modulate = Color.WHITE
+			owner_flag.play("default")
+			if name_label:
+				name_label.text = plot_data.plot_name
+				name_label.add_theme_color_override("font_color", Color(0.75, 0.50, 0.50))
+				name_label.visible = true
 
 		PlotData.OwnerType.PLAYER:
 			is_hovered = false
@@ -214,7 +274,12 @@ func update_visual_state() -> void:
 			depth_border_line.width = 3.0
 			depth_border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
 			owner_flag.visible = true
-			owner_flag.modulate = Color(UITheme.COLOR_GOLD_PRIMARY.r, UITheme.COLOR_GOLD_PRIMARY.g, UITheme.COLOR_GOLD_PRIMARY.b, 0.8)
+			owner_flag.modulate = Color.WHITE
+			owner_flag.play("default")
+			if name_label:
+				name_label.text = "✓ " + plot_data.plot_name
+				name_label.add_theme_color_override("font_color", Color(0.55, 0.95, 0.55))
+				name_label.visible = true
 
 ## Animate tile when mouse hovers over it
 func _animate_hover_in() -> void:

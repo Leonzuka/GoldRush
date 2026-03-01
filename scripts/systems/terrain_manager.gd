@@ -207,6 +207,13 @@ func highlight_gold_tiles(positions: Array) -> void:
 			tween.tween_property(indicator, "color:a", 0.2, 0.5)
 			tween.tween_property(indicator, "color:a", 0.5, 0.5)
 
+			# Auto-remove after 1 second
+			get_tree().create_timer(1.0).timeout.connect(func():
+				if gold_indicators.has(pos):
+					gold_indicators[pos].queue_free()
+					gold_indicators.erase(pos)
+			)
+
 # ============================================================================
 # DEBUG
 # ============================================================================

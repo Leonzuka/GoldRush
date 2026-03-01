@@ -14,6 +14,9 @@ var auction_system: AuctionSystem
 var ui_controller: Control  # Reference to AuctionUIController
 
 func _ready() -> void:
+	# Start background loading of mine animation frames as early as possible
+	PlotTile.request_preload()
+
 	await get_tree().process_frame
 
 	auction_system = get_tree().get_first_node_in_group("auction_system")
@@ -54,6 +57,9 @@ func _on_plots_generated(plots: Array) -> void:
 		# NOW add to tree (this calls _ready())
 		plot_grid.add_child(tile)
 
+		# Correct isometric draw order: tiles further back (lower row+col) render first
+		tile.z_index = plot.grid_position.x + plot.grid_position.y
+
 		# Connect signals
 		tile.clicked.connect(_on_plot_clicked)
 
@@ -90,9 +96,10 @@ func _grid_to_iso(grid_pos: Vector2i) -> Vector2:
 ## Centers camera on middle of grid
 func _center_camera() -> void:
 	# Center between first and last tile for better framing
+	@warning_ignore("integer_division")
 	var center = Vector2i(Config.AUCTION_MAP_COLS / 2, Config.AUCTION_MAP_ROWS / 2)
 	camera.position = _grid_to_iso(center)
-	camera.zoom = Vector2(0.8, 0.8)  # Zoom out to see all tiles
+	camera.zoom = Vector2(1.8, 1.8)  # Zoom in to make tiles readable
 	camera.enabled = true
 	camera.make_current()
 

@@ -15,10 +15,10 @@ class NPCAuctionAgent:
 	var preferred_richness: float  # Bias for rich/poor plots
 	var owned_plot: PlotData = null
 
-	func _init(name: String, round: int):
+	func _init(name: String, round_num: int):
 		agent_name = name
 		budget = randi_range(500, 1500)
-		aggression = 0.2 + (round * 0.05)  # Scales with round
+		aggression = 0.2 + (round_num * 0.05)  # Scales with round
 		aggression = clamp(aggression, 0.2, 0.8)
 		preferred_richness = randf_range(0.3, 1.3)
 
@@ -60,7 +60,8 @@ var plot_names: Array[String] = [
 	"Sunset Valley", "Golden Hills", "Copper Creek",
 	"Silver Ridge", "Fortune Flats", "Nugget Gorge",
 	"Prospector's Peak", "Eureka Basin", "Lucky Strike",
-	"El Dorado Plains"
+	"El Dorado Plains", "Jackpot Ridge", "Thunder Gulch",
+	"Diamond Hollow", "Old Dutch Mine"
 ]
 
 # ============================================================================
@@ -72,13 +73,17 @@ var plot_names: Array[String] = [
 func generate_plots() -> Array[PlotData]:
 	available_plots.clear()
 
+	# Shuffle names so each plot gets a unique one (pool has 14, need 12)
+	var shuffled_names = plot_names.duplicate()
+	shuffled_names.shuffle()
+
 	var plot_idx = 0
 	for row in range(Config.AUCTION_MAP_ROWS):
 		for col in range(Config.AUCTION_MAP_COLS):
 			var plot: PlotData = PlotData.new()
 			plot.plot_id = plot_idx
 			plot.grid_position = Vector2i(col, row)
-			plot.plot_name = plot_names[randi() % plot_names.size()]
+			plot.plot_name = shuffled_names[plot_idx % shuffled_names.size()]
 			plot.terrain_seed = randi()
 			plot.gold_richness = randf_range(0.5, 1.5)
 
