@@ -190,6 +190,14 @@ func world_to_tile(world_pos: Vector2) -> Vector2i:
 func tile_to_world(tile_pos: Vector2i) -> Vector2:
 	return to_global(tilemap.map_to_local(tile_pos))
 
+## Returns true if the tile at the given position is bedrock (not diggable)
+func is_bedrock_tile(tile_pos: Vector2i) -> bool:
+	return tilemap.get_cell_atlas_coords(0, tile_pos) == TILE_BEDROCK_ATLAS
+
+## Returns true if there is a solid (non-empty) tile at the given position
+func has_solid_tile(tile_pos: Vector2i) -> bool:
+	return tilemap.get_cell_source_id(0, tile_pos) != TILE_EMPTY
+
 ## Highlight revealed gold deposits (visual feedback)
 func highlight_gold_tiles(positions: Array) -> void:
 	for pos in positions:
@@ -258,11 +266,11 @@ func _draw() -> void:
 		var lp: Vector2 = tilemap.map_to_local(pos)
 		var tl := lp + Vector2(-half, -half)
 		var br := lp + Vector2(half, half)
-		var tr := lp + Vector2(half, -half)
+		var top_right := lp + Vector2(half, -half)
 		var bl := lp + Vector2(-half, half)
 		draw_rect(Rect2(tl, Vector2(Config.TILE_SIZE, Config.TILE_SIZE)), bedrock_fill)
 		draw_line(tl, br, bedrock_line, 1.0)
-		draw_line(tr, bl, bedrock_line, 1.0)
+		draw_line(top_right, bl, bedrock_line, 1.0)
 
 	if not debug_mode:
 		return

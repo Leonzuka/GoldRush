@@ -26,6 +26,7 @@ var auction_system: AuctionSystem
 var selected_plot: PlotData = null
 var money_tween: Tween
 var displayed_money: int = 0
+var npc_turn_active: bool = true  # Blocks player bids while NPCs are choosing
 
 # NPC roster sidebar (created in code, left edge)
 var npc_roster: PanelContainer
@@ -46,6 +47,7 @@ func _ready() -> void:
 	add_to_group("auction_ui")
 
 	# Resize SubViewport to match actual screen resolution to avoid blurry upscaling
+	$MapViewport.stretch = false
 	var real_size := Vector2i(get_viewport().get_visible_rect().size)
 	$MapViewport/SubViewport.size = real_size
 	get_tree().root.size_changed.connect(_on_window_resized)
@@ -235,6 +237,11 @@ func show_plot_info(plot: PlotData) -> void:
 		status_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
 		bid_button.disabled = true
 		bid_button.text = "Acquired"
+	elif npc_turn_active:
+		status_label.text = "Rivals are still choosing..."
+		status_label.add_theme_color_override("font_color", Color(0.65, 0.60, 0.50))
+		bid_button.disabled = true
+		bid_button.text = "Wait for Rivals"
 	else:
 		status_label.text = "Available for bidding"
 		status_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
@@ -308,9 +315,13 @@ func _on_npc_considering_plot(plot: PlotData, npc_name: String) -> void:
 	_set_npc_status(npc_name, "Eyeing \"%s\"..." % plot.plot_name, true, false)
 
 func _on_npc_turn_finished() -> void:
+	npc_turn_active = false
 	info_label.text = "Your turn!  Select an available plot."
 	_set_all_npc_status("Done for now")
 	_deactivate_all_npc_entries()
+	# Refresh panel so bid button unlocks if player already has a plot selected
+	if selected_plot and selected_plot.owner_type == PlotData.OwnerType.AVAILABLE:
+		show_plot_info(selected_plot)
 
 # ============================================================================
 # NPC ROSTER SIDEBAR

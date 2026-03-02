@@ -71,7 +71,6 @@ func start_new_game() -> void:
 func transition_to_auction() -> void:
 	current_state = GameState.AUCTION
 	await SceneTransition.transition_out(SceneTransition.Type.FADE)
-	EventBus.auction_started.emit()
 	get_tree().change_scene_to_file("res://scenes/auction/auction.tscn")
 	await get_tree().process_frame
 	SceneTransition.transition_in(SceneTransition.Type.FADE)
@@ -95,7 +94,7 @@ func start_mining_session(plot: Resource) -> void:
 	SceneTransition.transition_in(SceneTransition.Type.FADE)
 
 ## Transition to round end summary
-func show_round_end(stats: Dictionary) -> void:
+func show_round_end() -> void:
 	current_state = GameState.ROUND_END
 	# For MVP, immediately transition back to auction
 	# Future: Show summary panel
@@ -150,7 +149,7 @@ func _on_round_ended(stats: Dictionary) -> void:
 		"time_used": stats.get("time_used", 0.0)
 	})
 
-	show_round_end(stats)
+	show_round_end()
 
 # ============================================================================
 # GAME OVER

@@ -98,8 +98,8 @@ func _play_show_animation() -> void:
 	await get_tree().process_frame  # Ensure layout has run
 
 	var panel: PanelContainer = $PanelContainer
-	var size := panel.get_rect().size
-	panel.pivot_offset = size / 2.0 if size != Vector2.ZERO else Vector2(125, 150)
+	var panel_size := panel.get_rect().size
+	panel.pivot_offset = panel_size / 2.0 if panel_size != Vector2.ZERO else Vector2(125, 150)
 	panel.scale = Vector2(0.85, 0.85)
 	panel.modulate.a = 0.0
 

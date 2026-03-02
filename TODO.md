@@ -2,7 +2,6 @@
 
 ## 🔴 Tarefas Imediatas (Sprint Atual)
 - Terras indisponíveis quando um NPC escolhe - add um minigame
-- Leilão tá muito rápido e se eu selecionar um slot o jogo começa antes mesmo dos NPCs decidirem os slots.
 
 ### Gameplay Core & Balanceamento
 - [ ] Validar balanceamento de dificuldade dos plots
@@ -44,7 +43,7 @@
 - [ ] Upgrade de cooldown do scanner (SCAN_COOLDOWN)
 
 ### Persistencia
-- [ ] Salvar upgrades comprados entre sessoes (save/load)
+- [ ] Salvar upgrades comprados entre sessoes (save/load)?
 - [ ] Mostrar upgrades ativos no HUD durante mineracao
 
 ---
@@ -52,12 +51,9 @@
 ## 🔵 Phase 4: Polish e Refinamento
 
 ### Visual
-- [ ] Shader de escavacao suave (ja existe em `shaders/terrain_dig.gdshader`)
 - [ ] Assets artisticos (substituir placeholders)
-- [ ] Indicador visual de progresso de drill - Sprite rachando
-- [ ] Efeito de particulas ao cavar bedrock (faiscas de impacto)
 - [ ] Parallax background na cena de mineracao (ceu, nuvens)
-- [ ] Melhorar sprite do Gold Nugget (atual e um circulo com glow)
+- [ ] Melhorar sprite do Gold Nugget
 
 ### Audio
 - [ ] Sons de escavacao (dirt vs stone vs bedrock, variacoes)
@@ -71,10 +67,6 @@
 ### UX
 - [ ] Tutorial interativo no primeiro round (highlight areas, setas guia)
 - [ ] Tooltips explicativos em todos os botoes
-- [x] ~~Feedback visual quando drill esta fora de alcance~~ (Circulo branco = alcance, circulo vermelho + texto quando fora)
-- [ ] Indicador de direcao para ouro detectado (seta na borda da tela)?
-
----
 
 ## 🟣 Phase 5: Expansao de Conteudo
 
@@ -91,7 +83,6 @@
 ### Modos de Jogo
 - [ ] Modo historia com narrativa (cutscenes simples entre rounds)
 - [ ] Modo desafio (objetivos especificos: "colete 300 ouro em 60s")
----
 
 ## 💡 Nice to Have (Baixa Prioridade)
 

@@ -56,7 +56,7 @@ const ISO_TILE_DEPTH: int = 32    # Visual depth for 2.5D effect
 
 # NPC configuration
 const NPC_COUNT_PER_AUCTION: int = 3
-const NPC_BID_DELAY: float = 0.8  # Seconds between NPC actions
+const NPC_BID_DELAY: float = 2.0  # Seconds between NPC actions
 const NPC_NAMES: Array[String] = ["Big Bob", "Sly Sally", "Mad Max"]
 const NPC_COLORS: Dictionary = {
 	"Big Bob":   Color(0.9, 0.5, 0.1),

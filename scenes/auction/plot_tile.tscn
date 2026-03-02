@@ -6,6 +6,10 @@
 z_index = 1
 script = ExtResource("1_5h2m3")
 
+[node name="TerrainSprite" type="Sprite2D" parent="."]
+z_index = 0
+visible = false
+
 [node name="GroundPolygon" type="Polygon2D" parent="."]
 z_index = 1
 color = Color(0.6, 0.5, 0.3, 1)
@@ -22,12 +26,14 @@ color = Color(0.35, 0.25, 0.15, 1)
 antialiased = true
 
 [node name="DepthBorderLine" type="Line2D" parent="."]
+visible = false
 z_index = 2
 width = 1.5
 default_color = Color(0.3, 0.3, 0.3, 1)
 antialiased = true
 
 [node name="BorderLine" type="Line2D" parent="."]
+visible = false
 z_index = 2
 width = 1.5
 default_color = Color(0.3, 0.3, 0.3, 1)

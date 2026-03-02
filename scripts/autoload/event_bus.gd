@@ -7,17 +7,6 @@ extends Node
 # AUCTION SIGNALS
 # ============================================================================
 
-## Emitted when auction phase begins
-signal auction_started()
-
-## Emitted when player selects a plot card
-## @param plot_id: Unique identifier for the selected plot
-signal plot_selected(plot_id: int)
-
-## Emitted when player places a bid
-## @param amount: Bid amount in currency
-signal bid_placed(amount: int)
-
 ## Emitted when auction is won (by player or NPC)
 ## @param plot_data: PlotData resource containing terrain seed and richness
 signal auction_won(plot_data: Resource)

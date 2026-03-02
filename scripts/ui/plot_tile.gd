@@ -19,8 +19,28 @@ signal hovered(plot_tile: PlotTile)
 @onready var depth_border_line: Line2D = $DepthBorderLine
 @onready var border_line: Line2D = $BorderLine
 @onready var owner_flag: AnimatedSprite2D = $OwnerFlag
+@onready var terrain_sprite: Sprite2D = $TerrainSprite
 @onready var area: Area2D = $Area2D
 @onready var collision: CollisionPolygon2D = $Area2D/CollisionPolygon2D
+
+## Sprite uniform scale
+const _TERRAIN_SCALE: float = 0.150
+## Fine-tune Y offset in game pixels (0 = diamond face perfectly centered on tile origin)
+const _TERRAIN_OFFSET_Y: float = 0.0
+
+## --- Sprite dimensions measured directly on the 1024×1024 source textures ---
+## Y pixel where the top diamond face ends (grass-soil boundary) — clip here, hides all soil
+const _SPRITE_CLIP_Y: float = 496.0
+## Y pixel of the diamond vertical center in the source texture
+const _SPRITE_DIAMOND_CY: float = 290.0
+## Half-width of the diamond in source pixels (cube width 824 / 2)
+const _SPRITE_HW_PX: float = 412.0
+
+const TERRAIN_SPRITES: Dictionary = {
+	"poor":   "res://assets/sprites/Terrain_different.png",
+	"normal": "res://assets/sprites/Terrain.png",
+	"rich":   "res://assets/sprites/Red_terrain.png",
+}
 
 static var _mine_frames: SpriteFrames = null
 static var _preload_started: bool = false
@@ -96,6 +116,7 @@ func _ready() -> void:
 	_setup_input()
 	_setup_npc_pin()
 	_setup_name_label()
+	_setup_terrain_sprite()
 
 	# Load Gold Mine sprite (now using .jpeg extension)
 	_setup_mine_sprite()
@@ -134,14 +155,86 @@ func _setup_mine_sprite() -> void:
 
 	owner_flag.sprite_frames = _mine_frames
 
-	# Frames are 1920×1080 — scale down to fit the isometric diamond (128×64)
+	# Frames are 1920×1080 — scale up relative to the isometric diamond (128×64)
 	const FRAME_W: float = 1920.0
 	const FRAME_H: float = 1080.0
-	var scale_x = Config.ISO_TILE_WIDTH * 1 / FRAME_W
-	var scale_y = Config.ISO_TILE_HEIGHT * 1 / FRAME_H
+	var scale_x = Config.ISO_TILE_WIDTH * 1.4 / FRAME_W
+	var scale_y = Config.ISO_TILE_HEIGHT * 1.2 / FRAME_H
 	owner_flag.scale = Vector2.ONE * min(scale_x, scale_y)
 	owner_flag.position = Vector2.ZERO
 	owner_flag.visible = false
+
+## Loads the terrain sprite, clips it to show ONLY the green top face (no soil sides),
+## centers the diamond on the tile origin, then updates collision and border to match.
+## Clipping at _SPRITE_CLIP_Y (496px) lands on the natural grass-soil edge so the
+## cut is invisible, and the soil staircase/elevation effect is completely eliminated.
+func _setup_terrain_sprite() -> void:
+	if not plot_data:
+		terrain_sprite.visible = false
+		return
+
+	var stars: int = plot_data.get_star_rating()
+	var key: String
+	if stars <= 2:
+		key = "poor"
+	elif stars <= 3:
+		key = "normal"
+	else:
+		key = "rich"
+
+	var tex: Texture2D = load(TERRAIN_SPRITES[key])
+	if not tex:
+		return
+	terrain_sprite.texture = tex
+	terrain_sprite.scale   = Vector2(_TERRAIN_SCALE, _TERRAIN_SCALE)
+	terrain_sprite.centered = true
+	terrain_sprite.visible  = true
+
+	# Clip to the green top face only — no brown soil sides
+	# region width = full texture width, height = up to grass-soil boundary
+	var tex_w: float = float(tex.get_width())
+	terrain_sprite.region_enabled = true
+	terrain_sprite.region_rect    = Rect2(0.0, 0.0, tex_w, _SPRITE_CLIP_Y)
+
+	# With region_enabled + centered, the anchor is at the REGION center (tex_w/2, clip_y/2).
+	# Compute the Y shift so the diamond center lands exactly on tile origin (0, 0).
+	#   anchor_y  = _SPRITE_CLIP_Y / 2  = 248 px (region center in texture coords)
+	#   diamond_y = _SPRITE_DIAMOND_CY   = 290 px (diamond center in texture coords)
+	#   offset    = (diamond_y - anchor_y) * scale  → how far below origin the diamond lands
+	#   position  = -offset  → moves sprite up so diamond sits at y=0
+	var anchor_y: float  = _SPRITE_CLIP_Y / 2.0
+	var offset_y: float  = (_SPRITE_DIAMOND_CY - anchor_y) * _TERRAIN_SCALE
+	terrain_sprite.position = Vector2(0.0, -offset_y + _TERRAIN_OFFSET_Y)
+
+	# Hide the flat polygon fills — sprite is the visual now
+	ground_polygon.visible     = false
+	depth_polygon.visible      = false
+	left_depth_polygon.visible = false
+
+	_recalculate_border_to_sprite()
+
+## Sets border_line and collision polygon to the sprite's visible diamond face.
+## hw / hh are derived from the measured sprite dimensions, not from ISO_TILE_WIDTH,
+## so they precisely match what the player sees and can click.
+func _recalculate_border_to_sprite() -> void:
+	# hw = half the diamond's horizontal span in game pixels
+	var hw: float = _SPRITE_HW_PX * _TERRAIN_SCALE          # 412 * 0.150 = 61.8
+	var hh: float = hw / 2.0                                  # isometric 2:1  = 30.9
+	var cy: float = _TERRAIN_OFFSET_Y                         # 0 = diamond at tile origin
+
+	var pts: PackedVector2Array = PackedVector2Array([
+		Vector2( 0.0, cy - hh),  # top vertex
+		Vector2( hw,  cy),        # right vertex
+		Vector2( 0.0, cy + hh),  # bottom vertex
+		Vector2(-hw,  cy),        # left vertex
+	])
+
+	collision.polygon = pts           # mouse detection matches visible sprite
+
+	pts.append(Vector2(0.0, cy - hh)) # close border loop
+	border_line.points = pts
+
+	depth_border_line.visible = false
 
 ## Creates isometric diamond geometry for the tile
 func _setup_geometry() -> void:
@@ -231,42 +324,39 @@ func update_visual_state() -> void:
 	if not plot_data:
 		return
 
-	# Base color from richness
-	var base_color = plot_data.get_richness_color()
-	ground_polygon.color = base_color
-	depth_polygon.color = base_color.darkened(0.4)
-	left_depth_polygon.color = base_color.darkened(0.55)
-
 	# Kill any running hover tweens
 	if hover_tween and hover_tween.is_valid():
 		hover_tween.kill()
 	if pulse_tween and pulse_tween.is_valid():
 		pulse_tween.kill()
 
-	# State-based modulation
+	# State-based visuals
 	match plot_data.owner_type:
 		PlotData.OwnerType.AVAILABLE:
+			terrain_sprite.modulate = Color.WHITE
 			owner_flag.visible = false
 			if is_hovered:
+				border_line.visible = true
 				_animate_hover_in()
 				if name_label:
 					name_label.text = plot_data.plot_name
 					name_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.55))
 					name_label.visible = true
 			else:
+				border_line.visible = false
 				_animate_hover_out()
 				if name_label:
 					name_label.visible = false
 
 		PlotData.OwnerType.NPC:
 			is_hovered = false
-			modulate = Color(0.6, 0.6, 0.7)
+			modulate = Color.WHITE
 			scale = Vector2.ONE
+			terrain_sprite.modulate = Color(0.65, 0.65, 0.65, 1.0)
 			var npc_border_color: Color = Config.NPC_COLORS.get(plot_data.owner_name, UITheme.COLOR_DANGER)
+			border_line.visible = true
 			border_line.width = 2.0
 			border_line.default_color = npc_border_color
-			depth_border_line.width = 2.0
-			depth_border_line.default_color = npc_border_color
 			owner_flag.visible = true
 			owner_flag.modulate = Color.WHITE
 			owner_flag.play("default")
@@ -277,12 +367,12 @@ func update_visual_state() -> void:
 
 		PlotData.OwnerType.PLAYER:
 			is_hovered = false
-			modulate = Color(1.1, 1.0, 0.8)
+			modulate = Color.WHITE
 			scale = Vector2.ONE
+			terrain_sprite.modulate = Color(1.15, 1.05, 0.75, 1.0)
+			border_line.visible = true
 			border_line.width = 3.0
 			border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
-			depth_border_line.width = 3.0
-			depth_border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
 			owner_flag.visible = true
 			owner_flag.modulate = Color.WHITE
 			owner_flag.play("default")
@@ -298,8 +388,6 @@ func _animate_hover_in() -> void:
 	hover_tween.tween_property(self, "modulate", Color(1.25, 1.2, 1.1), 0.15)
 	border_line.width = 3.0
 	border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
-	depth_border_line.width = 3.0
-	depth_border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
 
 	# Start pulsating border glow
 	pulse_tween = create_tween().set_loops()
@@ -311,9 +399,6 @@ func _animate_hover_out() -> void:
 	hover_tween = create_tween().set_parallel(true)
 	hover_tween.tween_property(self, "scale", Vector2.ONE, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	hover_tween.tween_property(self, "modulate", Color.WHITE, 0.2)
-	hover_tween.tween_property(border_line, "width", 1.5, 0.2)
-	hover_tween.tween_property(border_line, "default_color", UITheme.COLOR_BORDER_GOLD.darkened(0.5), 0.2)
-	hover_tween.tween_property(depth_border_line, "default_color", UITheme.COLOR_BORDER_GOLD.darkened(0.5), 0.2)
 
 func _on_mouse_entered() -> void:
 	if plot_data and plot_data.is_biddable():

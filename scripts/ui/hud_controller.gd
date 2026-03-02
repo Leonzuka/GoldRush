@@ -93,7 +93,7 @@ func update_money_display() -> void:
 
 func _on_time_updated(time_remaining: float) -> void:
 	var total_seconds: int = int(time_remaining)
-	var minutes: int = total_seconds / 60
+	var minutes: int = int(total_seconds / 60.0)
 	var seconds: int = total_seconds % 60
 	time_label.text = "%02d:%02d" % [minutes, seconds]
 

@@ -27,6 +27,11 @@ var is_out_of_range: bool = false
 var current_target_tile: Vector2i
 var drill_progress: float = 0.0
 
+var _bedrock_spark_timer: float = 0.0
+const _BEDROCK_SPARK_INTERVAL: float = 0.12
+
+var _drill_overlay: DrillOverlay
+
 # ============================================================================
 # INITIALIZATION
 # ============================================================================
@@ -40,6 +45,11 @@ func _ready() -> void:
 
 	if not gold_nugget_scene:
 		gold_nugget_scene = load("res://scenes/mining/gold_nugget.tscn")
+
+	# Create crack overlay (lives in scene root so z_index works globally)
+	_drill_overlay = DrillOverlay.new()
+	_drill_overlay.z_index = 5
+	get_tree().root.add_child(_drill_overlay)
 
 # ============================================================================
 # DRILLING
@@ -94,6 +104,20 @@ func attempt_drill(tile_pos: Vector2i, delta: float) -> void:
 		reset_drill()
 		return
 
+	# Bedrock: spawn impact sparks periodically, don't progress
+	if terrain_manager.is_bedrock_tile(tile_pos):
+		_bedrock_spark_timer -= delta
+		if _bedrock_spark_timer <= 0.0:
+			_spawn_bedrock_sparks(tile_pos)
+			_bedrock_spark_timer = _BEDROCK_SPARK_INTERVAL
+		_drill_overlay.refresh(0.0, Vector2.ZERO, false)
+		return
+
+	# Don't show overlay on empty tiles (air / already dug)
+	if not terrain_manager.has_solid_tile(tile_pos):
+		_drill_overlay.refresh(0.0, Vector2.ZERO, false)
+		return
+
 	# Reset progress if targeting new tile
 	if current_target_tile != tile_pos:
 		current_target_tile = tile_pos
@@ -101,6 +125,10 @@ func attempt_drill(tile_pos: Vector2i, delta: float) -> void:
 
 	# Increment drill progress
 	drill_progress += drill_speed * delta
+
+	# Update crack overlay
+	var tile_world_pos: Vector2 = terrain_manager.tile_to_world(tile_pos)
+	_drill_overlay.refresh(minf(drill_progress, 1.0), tile_world_pos, true)
 
 	# Complete drilling when progress >= 1.0
 	if drill_progress >= 1.0:
@@ -116,6 +144,9 @@ func attempt_drill(tile_pos: Vector2i, delta: float) -> void:
 func reset_drill() -> void:
 	drill_progress = 0.0
 	is_drilling = false
+	_bedrock_spark_timer = 0.0
+	if _drill_overlay:
+		_drill_overlay.refresh(0.0, Vector2.ZERO, false)
 
 # ============================================================================
 # GOLD NUGGET SPAWNING
@@ -180,6 +211,26 @@ func _spawn_gold_sparks(tile_pos: Vector2i) -> void:
 	sparks.finished.connect(sparks.queue_free)
 	get_tree().root.add_child(sparks)
 
+## Spawn bright impact sparks when trying to drill bedrock
+func _spawn_bedrock_sparks(tile_pos: Vector2i) -> void:
+	var sparks := CPUParticles2D.new()
+	sparks.emitting = true
+	sparks.amount = 8
+	sparks.lifetime = 0.35
+	sparks.one_shot = true
+	sparks.explosiveness = 1.0
+	sparks.direction = Vector2(0, -1)
+	sparks.spread = 65.0
+	sparks.initial_velocity_min = 50.0
+	sparks.initial_velocity_max = 110.0
+	sparks.gravity = Vector2(0, 90)
+	sparks.scale_amount_min = 1.0
+	sparks.scale_amount_max = 2.0
+	sparks.color_ramp = _create_bedrock_spark_gradient()
+	sparks.global_position = terrain_manager.tile_to_world(tile_pos)
+	sparks.finished.connect(sparks.queue_free)
+	get_tree().root.add_child(sparks)
+
 ## Create a gold-colored gradient for spark particles
 func _create_gold_gradient() -> Gradient:
 	var gradient := Gradient.new()
@@ -188,4 +239,14 @@ func _create_gold_gradient() -> Gradient:
 	gradient.add_point(0.4, Color(1.0, 0.75, 0.1, 0.9))  # Rich gold
 	gradient.set_offset(2, 1.0)
 	gradient.set_color(2, Color(0.9, 0.5, 0.0, 0.0))  # Fade to transparent orange
+	return gradient
+
+## Create a white-orange gradient for bedrock impact sparks
+func _create_bedrock_spark_gradient() -> Gradient:
+	var gradient := Gradient.new()
+	gradient.set_offset(0, 0.0)
+	gradient.set_color(0, Color(1.0, 1.0, 0.95, 1.0))  # Near-white hot
+	gradient.add_point(0.35, Color(1.0, 0.7, 0.15, 1.0))  # Orange
+	gradient.set_offset(2, 1.0)
+	gradient.set_color(2, Color(0.6, 0.2, 0.0, 0.0))  # Fade out
 	return gradient
