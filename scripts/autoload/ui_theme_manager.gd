@@ -67,12 +67,13 @@ func _build_theme() -> Theme:
 	# Default font and size
 	if font_body:
 		theme.default_font = font_body
-	theme.default_font_size = 14
+	theme.default_font_size = 16
 
 	# --- Label ---
 	theme.set_color("font_color", "Label", COLOR_TEXT_WARM)
 	if font_body:
 		theme.set_font("font", "Label", font_body)
+	theme.set_font_size("font_size", "Label", 16)
 
 	# --- Button ---
 	theme.set_color("font_color", "Button", COLOR_TEXT_WARM)
@@ -81,7 +82,7 @@ func _build_theme() -> Theme:
 	theme.set_color("font_disabled_color", "Button", COLOR_TEXT_MUTED)
 	if font_body_bold:
 		theme.set_font("font", "Button", font_body_bold)
-	theme.set_font_size("font_size", "Button", 14)
+	theme.set_font_size("font_size", "Button", 16)
 	theme.set_stylebox("normal", "Button", action_button_style())
 	theme.set_stylebox("hover", "Button", _button_hover_style())
 	theme.set_stylebox("pressed", "Button", _button_pressed_style())

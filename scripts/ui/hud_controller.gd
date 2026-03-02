@@ -70,8 +70,13 @@ func _setup_tooltips() -> void:
 func _create_fps_counter() -> void:
 	fps_label = Label.new()
 	fps_label.name = "FPSLabel"
-	fps_label.position = Vector2(10, 10)
 	fps_label.add_theme_font_size_override("font_size", 14)
+	fps_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	fps_label.offset_left = -90
+	fps_label.offset_top = 10
+	fps_label.offset_right = -10
+	fps_label.offset_bottom = 30
+	fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(fps_label)
 
 # ============================================================================

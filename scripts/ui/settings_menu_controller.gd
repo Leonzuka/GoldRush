@@ -72,6 +72,13 @@ func _apply_settings_styles() -> void:
 				lbl.add_theme_font_override("font", UITheme.font_heading)
 			lbl.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
 
+	# Fullscreen checkbox
+	fullscreen_checkbox.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
+	fullscreen_checkbox.add_theme_stylebox_override("normal", UITheme.chip_style())
+	fullscreen_checkbox.add_theme_stylebox_override("pressed", UITheme.chip_style())
+	fullscreen_checkbox.add_theme_stylebox_override("hover", UITheme.chip_style(UITheme.COLOR_SURFACE_LIGHT))
+	fullscreen_checkbox.add_theme_stylebox_override("hover_pressed", UITheme.chip_style(UITheme.COLOR_SURFACE_LIGHT))
+
 	# Buttons
 	close_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
 	reset_button.add_theme_stylebox_override("normal", UITheme.action_button_style())

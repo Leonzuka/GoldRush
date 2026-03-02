@@ -212,7 +212,7 @@ func _setup_name_label() -> void:
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.position = Vector2(-35, 22)
 	name_label.custom_minimum_size = Vector2(70, 0)
-	name_label.add_theme_font_size_override("font_size", 7)
+	name_label.add_theme_font_size_override("font_size", 11)
 	name_label.visible = false
 
 	var style = StyleBoxFlat.new()
@@ -368,7 +368,7 @@ func _setup_npc_pin() -> void:
 	npc_pin_label = Label.new()
 	npc_pin_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	npc_pin_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
-	npc_pin_label.add_theme_font_size_override("font_size", 11)
+	npc_pin_label.add_theme_font_size_override("font_size", 13)
 	npc_pin_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(npc_pin_label)
 

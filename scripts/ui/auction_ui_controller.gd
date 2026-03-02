@@ -45,6 +45,11 @@ const NPC_IMAGES: Dictionary = {
 func _ready() -> void:
 	add_to_group("auction_ui")
 
+	# Resize SubViewport to match actual screen resolution to avoid blurry upscaling
+	var real_size := Vector2i(get_viewport().get_visible_rect().size)
+	$MapViewport/SubViewport.size = real_size
+	get_tree().root.size_changed.connect(_on_window_resized)
+
 	_apply_auction_styles()
 
 	# Connect signals
@@ -498,6 +503,10 @@ func _deactivate_all_npc_entries() -> void:
 		entry["status_lbl"].add_theme_color_override("font_color", Color(0.55, 0.50, 0.42))
 		entry["entry_style"].bg_color = Color(color.r * 0.12, color.g * 0.12, color.b * 0.12, 0.8)
 		entry["entry_style"].border_color = Color(color.r, color.g, color.b, 0.5)
+
+func _on_window_resized() -> void:
+	var new_size := Vector2i(get_viewport().get_visible_rect().size)
+	$MapViewport/SubViewport.size = new_size
 
 ## Returns the initials of an NPC name (e.g. "Big Bob" → "BB")
 func _get_initials(npc_name: String) -> String:

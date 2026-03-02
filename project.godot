@@ -101,3 +101,4 @@ toggle_help={
 
 textures/canvas_textures/default_texture_filter=0
 anti_aliasing/quality/msaa_2d=1
+text/default_font_oversampling=2.0

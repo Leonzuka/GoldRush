@@ -2,7 +2,7 @@
 
 ## 🔴 Tarefas Imediatas (Sprint Atual)
 - Terras indisponíveis quando um NPC escolhe - add um minigame
-- Remover o círculo delimitando a área de mineração.
+- Leilão tá muito rápido e se eu selecionar um slot o jogo começa antes mesmo dos NPCs decidirem os slots.
 
 ### Gameplay Core & Balanceamento
 - [ ] Validar balanceamento de dificuldade dos plots
@@ -104,12 +104,6 @@
 - [ ] Mobile port (touch controls)
 - [ ] Sistema de save/load completo (continuar de onde parou)
 - [ ] Settings persistentes (volume, resolucao, fullscreen)
-
----
-
-## 🐛 Bugs Conhecidos
-
-- [x] ~~A lateral do slot do leilao nao renderizava~~ (Adicionado LeftDepthPolygon + DepthBorderLine)
 
 ## 📝 Ideias Nao Priorizadas
 

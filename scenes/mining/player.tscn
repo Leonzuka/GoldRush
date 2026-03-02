@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://c8vg2aujnkk6b"]
+[gd_scene load_steps=6 format=3 uid="uid://c8vg2aujnkk6b"]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/player/drill_component.gd" id="2_drill"]
 [ext_resource type="Script" path="res://scripts/player/scanner_component.gd" id="3_scanner"]
+[ext_resource type="Texture2D" uid="uid://ct8jom8i30cpn" path="res://assets/sprites/Prota.png" id="4_prota"]
 
 [sub_resource type="CapsuleShape2D" id="RectangleShape2D_1"]
 radius = 7.0
@@ -13,12 +14,10 @@ collision_layer = 2
 collision_mask = 5
 script = ExtResource("1_player")
 
-[node name="Sprite2D" type="ColorRect" parent="."]
-offset_left = -7.0
-offset_top = -15.0
-offset_right = 7.0
-offset_bottom = 15.0
-color = Color(0.254902, 0.411765, 0.882353, 1)
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -10)
+texture = ExtResource("4_prota")
+scale = Vector2(0.07, 0.07)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
@@ -31,4 +30,3 @@ script = ExtResource("3_scanner")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 enabled = true
-zoom = Vector2(1.5, 1.5)
