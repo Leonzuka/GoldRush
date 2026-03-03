@@ -17,6 +17,7 @@ class_name MiningSession
 var elapsed_time: float = 0.0
 var gold_collected: int = 0
 var is_active: bool = false
+var _storage_goal_reached: bool = false
 
 # Reference to terrain manager
 var terrain_manager: TerrainManager = null
@@ -29,6 +30,7 @@ func _ready() -> void:
 	print("[MiningSession] _ready() called")
 	EventBus.gold_collected.connect(_on_gold_collected)
 	EventBus.mining_started.connect(_on_mining_started)
+	EventBus.end_mining_requested.connect(_on_end_mining_requested)
 	print("[MiningSession] Connected to signals, waiting for mining_started event")
 
 # ============================================================================
@@ -40,6 +42,7 @@ func start_session() -> void:
 	elapsed_time = 0.0
 	gold_collected = 0
 	is_active = true
+	_storage_goal_reached = false
 	EventBus.resource_storage_changed.emit(0, storage_capacity)
 	print("[MiningSession] Session started - timer active")
 
@@ -79,16 +82,16 @@ func _on_gold_collected(amount: int) -> void:
 	if not is_active:
 		return
 
-	# Clamp to storage capacity
-	var space_available: int = storage_capacity - gold_collected
-	var actual_amount: int = min(amount, space_available)
-
-	gold_collected += actual_amount
+	gold_collected += amount
 	EventBus.resource_storage_changed.emit(gold_collected, storage_capacity)
 
-	# Check storage full
-	if gold_collected >= storage_capacity:
-		end_session("Storage full")
+	# Check if storage goal is reached for the first time (one-time bonus)
+	if not _storage_goal_reached and gold_collected >= storage_capacity:
+		_storage_goal_reached = true
+		EventBus.storage_goal_reached.emit()
+
+func _on_end_mining_requested() -> void:
+	end_session("Player ended")
 
 func _on_mining_started(plot_data: Resource) -> void:
 	print("[MiningSession] Mining started with plot: %s (seed=%d, richness=%.2f)" % [plot_data.plot_name, plot_data.terrain_seed, plot_data.gold_richness])

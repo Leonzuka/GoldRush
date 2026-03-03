@@ -83,13 +83,15 @@ func _clear_map() -> void:
 		child.queue_free()
 	plot_tiles.clear()
 
-## Converts grid coordinates (col, row) to isometric screen position
+## Converts grid coordinates (col, row) to isometric screen position.
+## Uses the actual sprite diamond half-height for y-spacing so tiles
+## align seamlessly without a stair-step effect between rows.
 func _grid_to_iso(grid_pos: Vector2i) -> Vector2:
-	var hw = Config.ISO_TILE_WIDTH / 2.0
-	var hh = Config.ISO_TILE_HEIGHT / 2.0
+	var hw: float = Config.ISO_TILE_WIDTH / 2.0
+	var hh: float = PlotTile._SPRITE_HH_PX * PlotTile._TERRAIN_SCALE  # ≈36.9
 
-	var x = (grid_pos.x - grid_pos.y) * hw
-	var y = (grid_pos.x + grid_pos.y) * hh
+	var x: float = (grid_pos.x - grid_pos.y) * hw
+	var y: float = (grid_pos.x + grid_pos.y) * hh
 
 	return Vector2(x, y)
 

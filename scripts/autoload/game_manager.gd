@@ -34,6 +34,7 @@ func _ready() -> void:
 	# Connect to relevant signals
 	EventBus.auction_won.connect(_on_auction_won)
 	EventBus.round_ended.connect(_on_round_ended)
+	EventBus.storage_goal_reached.connect(_on_storage_goal_reached)
 
 func _input(event: InputEvent) -> void:
 	# Debug mode toggle
@@ -96,9 +97,8 @@ func start_mining_session(plot: Resource) -> void:
 ## Transition to round end summary
 func show_round_end() -> void:
 	current_state = GameState.ROUND_END
-	# For MVP, immediately transition back to auction
-	# Future: Show summary panel
-	await get_tree().create_timer(0.5).timeout
+	# Wait for player to dismiss the round end panel
+	await EventBus.round_end_confirmed
 
 	if player_money < Config.MIN_PLOT_PRICE:
 		game_over()
@@ -127,6 +127,10 @@ func can_afford(amount: int) -> bool:
 # ============================================================================
 # SIGNAL HANDLERS
 # ============================================================================
+
+func _on_storage_goal_reached() -> void:
+	change_money(Config.STORAGE_GOAL_BONUS)
+	print("[GameManager] Storage goal reached! Bonus: +$%d" % Config.STORAGE_GOAL_BONUS)
 
 func _on_auction_won(plot_data: Resource) -> void:
 	# Deduct bid amount (stored in plot_data.final_bid_price)

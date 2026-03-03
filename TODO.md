@@ -2,6 +2,8 @@
 
 ## 🔴 Tarefas Imediatas (Sprint Atual)
 - Terras indisponíveis quando um NPC escolhe - add um minigame
+- Melhorar a lógica dos NPCs (com personalidade nas escolhas,etc)
+- Acelera um pouco a escolhas dos NPC no Leilão após o 1 leilão (deixar normal)
 
 ### Gameplay Core & Balanceamento
 - [ ] Validar balanceamento de dificuldade dos plots

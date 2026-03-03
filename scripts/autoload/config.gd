@@ -16,7 +16,8 @@ const MAX_PLOT_PRICE: int = 500
 # ============================================================================
 
 const ROUND_TIME_LIMIT: float = 120.0  # 2 minutes
-const STORAGE_CAPACITY: int = 500      # Gold units
+const STORAGE_CAPACITY: int = 500      # Gold goal threshold (not a hard cap)
+const STORAGE_GOAL_BONUS: int = 300    # Money bonus for filling storage
 const DRILL_SPEED: float = 3.0         # Tiles per second
 const DRILL_REACH: float = 48.0        # Pixels from player (3 tiles)
 

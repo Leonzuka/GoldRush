@@ -31,7 +31,7 @@ grow_vertical = 2
 
 [node name="ResultsPanel" type="PanelContainer" parent="CenterContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(480, 0)
+custom_minimum_size = Vector2(520, 0)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/ResultsPanel"]
 layout_mode = 2
@@ -48,7 +48,7 @@ layout_mode = 2
 
 [node name="StatsContainer" type="VBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="GoldRow" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer"]
 layout_mode = 2
@@ -62,6 +62,20 @@ text = "Gold Collected"
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "0"
+horizontal_alignment = 2
+
+[node name="StorageRow" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer"]
+layout_mode = 2
+
+[node name="StorageKeyLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/StorageRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Storage Goal"
+
+[node name="StorageValueLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/StorageRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "0%"
 horizontal_alignment = 2
 
 [node name="TimeRow" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer"]
@@ -78,6 +92,20 @@ theme_override_font_sizes/font_size = 16
 text = "0.0s"
 horizontal_alignment = 2
 
+[node name="ReasonRow" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer"]
+layout_mode = 2
+
+[node name="ReasonKeyLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/ReasonRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Ended by"
+
+[node name="ReasonValueLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/ReasonRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Time"
+horizontal_alignment = 2
+
 [node name="HSeparator2" type="HSeparator" parent="CenterContainer/ResultsPanel/VBoxContainer"]
 layout_mode = 2
 
@@ -85,21 +113,32 @@ layout_mode = 2
 layout_mode = 2
 alignment = 1
 
-[node name="GradeLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/GradeContainer"]
+[node name="GradeInfoVBox" type="VBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/GradeContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Efficiency"
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="GradeLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/GradeContainer/GradeInfoVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Efficiency Grade"
+vertical_alignment = 1
+
+[node name="GradeDescLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/GradeContainer/GradeInfoVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = ""
 vertical_alignment = 1
 
 [node name="GradeValueLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/GradeContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
+theme_override_font_sizes/font_size = 72
 text = "B"
 
 [node name="HSeparator3" type="HSeparator" parent="CenterContainer/ResultsPanel/VBoxContainer"]
 layout_mode = 2
 
 [node name="ContinueButton" type="Button" parent="CenterContainer/ResultsPanel/VBoxContainer"]
-custom_minimum_size = Vector2(320, 52)
+custom_minimum_size = Vector2(360, 56)
 layout_mode = 2
 text = "CONTINUE TO AUCTION"

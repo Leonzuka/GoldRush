@@ -23,18 +23,20 @@ signal hovered(plot_tile: PlotTile)
 @onready var area: Area2D = $Area2D
 @onready var collision: CollisionPolygon2D = $Area2D/CollisionPolygon2D
 
-## Sprite uniform scale
-const _TERRAIN_SCALE: float = 0.150
+## Sprite uniform scale — 431.5px * 0.1483 ≈ 64px = ISO_TILE_WIDTH/2, fills the grid cell
+const _TERRAIN_SCALE: float = 0.1483
 ## Fine-tune Y offset in game pixels (0 = diamond face perfectly centered on tile origin)
 const _TERRAIN_OFFSET_Y: float = 0.0
 
-## --- Sprite dimensions measured directly on the 1024×1024 source textures ---
-## Y pixel where the top diamond face ends (grass-soil boundary) — clip here, hides all soil
-const _SPRITE_CLIP_Y: float = 496.0
-## Y pixel of the diamond vertical center in the source texture
-const _SPRITE_DIAMOND_CY: float = 290.0
-## Half-width of the diamond in source pixels (cube width 824 / 2)
-const _SPRITE_HW_PX: float = 412.0
+## --- Sprite dimensions measured from the 1024×1024 source textures (all 3 identical) ---
+## Y pixel of the diamond vertical center (widest row = left/right vertices)
+const _SPRITE_DIAMOND_CY: float = 262.0
+## Half-width of the diamond in source pixels (left x=72 to right x=935)
+const _SPRITE_HW_PX: float = 431.5
+## Half-height of the diamond in source pixels (top y=13 to center y=262)
+const _SPRITE_HH_PX: float = 249.0
+## Soil depth in source pixels (diamond bottom y=511 to cube bottom y=1008)
+const _SPRITE_DEPTH_PX: float = 497.0
 
 const TERRAIN_SPRITES: Dictionary = {
 	"poor":   "res://assets/sprites/Terrain_different.png",
@@ -72,30 +74,57 @@ var npc_pin_avatar: TextureRect
 var npc_pin_label: Label
 var name_label: Label
 
+## Tracks the frontmost hovered tile across all instances (z_index priority)
+static var _current_hover: PlotTile = null
+
 func _input(event: InputEvent) -> void:
 	if not plot_data:
 		return
 
 	if event is InputEventMouseButton:
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			var local_pos = area.get_local_mouse_position()
-			if _point_in_polygon(local_pos, collision.polygon):
-				if plot_data.is_biddable():
-					clicked.emit(self)
-					get_viewport().set_input_as_handled()
+			# Only click the tile that is currently hovered (frontmost)
+			if _current_hover == self and plot_data.is_biddable():
+				clicked.emit(self)
+				get_viewport().set_input_as_handled()
 
 func _process(_delta: float) -> void:
 	if not plot_data:
 		return
 
+	# Invalidate stale hover reference
+	if not is_instance_valid(_current_hover):
+		_current_hover = null
+
+	# Non-available tiles don't participate in hover — release and bail out
+	if not plot_data.is_biddable():
+		if _current_hover == self:
+			_current_hover = null
+		if is_hovered:
+			is_hovered = false
+			update_visual_state()
+		return
+
 	var local_pos = area.get_local_mouse_position()
 	var mouse_over = _point_in_polygon(local_pos, collision.polygon)
 
-	if mouse_over != is_hovered:
-		is_hovered = mouse_over
+	if mouse_over:
+		# Take hover if we're frontmost (highest z_index) or no current hover
+		if _current_hover == null or _current_hover == self or z_index >= _current_hover.z_index:
+			if _current_hover != null and _current_hover != self:
+				_current_hover.is_hovered = false
+				_current_hover.update_visual_state()
+			_current_hover = self
+			if not is_hovered:
+				is_hovered = true
+				hovered.emit(self)
+				update_visual_state()
+	else:
 		if is_hovered:
-			hovered.emit(self)
-		update_visual_state()
+			is_hovered = false
+			if _current_hover == self:
+				_current_hover = null
+			update_visual_state()
 
 func _point_in_polygon(point: Vector2, polygon: PackedVector2Array) -> bool:
 	# Simple point-in-polygon test
@@ -164,10 +193,8 @@ func _setup_mine_sprite() -> void:
 	owner_flag.position = Vector2.ZERO
 	owner_flag.visible = false
 
-## Loads the terrain sprite, clips it to show ONLY the green top face (no soil sides),
-## centers the diamond on the tile origin, then updates collision and border to match.
-## Clipping at _SPRITE_CLIP_Y (496px) lands on the natural grass-soil edge so the
-## cut is invisible, and the soil staircase/elevation effect is completely eliminated.
+## Loads the terrain sprite (full isometric cube with soil sides visible),
+## centers the diamond face on the tile origin, then updates collision and border.
 func _setup_terrain_sprite() -> void:
 	if not plot_data:
 		terrain_sprite.visible = false
@@ -190,19 +217,13 @@ func _setup_terrain_sprite() -> void:
 	terrain_sprite.centered = true
 	terrain_sprite.visible  = true
 
-	# Clip to the green top face only — no brown soil sides
-	# region width = full texture width, height = up to grass-soil boundary
-	var tex_w: float = float(tex.get_width())
-	terrain_sprite.region_enabled = true
-	terrain_sprite.region_rect    = Rect2(0.0, 0.0, tex_w, _SPRITE_CLIP_Y)
+	# No region clipping — show the full isometric cube (green top + soil sides)
+	terrain_sprite.region_enabled = false
 
-	# With region_enabled + centered, the anchor is at the REGION center (tex_w/2, clip_y/2).
-	# Compute the Y shift so the diamond center lands exactly on tile origin (0, 0).
-	#   anchor_y  = _SPRITE_CLIP_Y / 2  = 248 px (region center in texture coords)
-	#   diamond_y = _SPRITE_DIAMOND_CY   = 290 px (diamond center in texture coords)
-	#   offset    = (diamond_y - anchor_y) * scale  → how far below origin the diamond lands
-	#   position  = -offset  → moves sprite up so diamond sits at y=0
-	var anchor_y: float  = _SPRITE_CLIP_Y / 2.0
+	# With centered=true, the anchor is at the texture center (w/2, h/2).
+	# Shift the sprite so the diamond center (_SPRITE_DIAMOND_CY) lands at tile origin.
+	var tex_h: float = float(tex.get_height())
+	var anchor_y: float  = tex_h / 2.0
 	var offset_y: float  = (_SPRITE_DIAMOND_CY - anchor_y) * _TERRAIN_SCALE
 	terrain_sprite.position = Vector2(0.0, -offset_y + _TERRAIN_OFFSET_Y)
 
@@ -213,26 +234,34 @@ func _setup_terrain_sprite() -> void:
 
 	_recalculate_border_to_sprite()
 
-## Sets border_line and collision polygon to the sprite's visible diamond face.
-## hw / hh are derived from the measured sprite dimensions, not from ISO_TILE_WIDTH,
-## so they precisely match what the player sees and can click.
+## Sets collision polygon (hexagonal — full block clickable) and border
+## (top diamond face only — always fully visible, never occluded by front tiles).
 func _recalculate_border_to_sprite() -> void:
-	# hw = half the diamond's horizontal span in game pixels
-	var hw: float = _SPRITE_HW_PX * _TERRAIN_SCALE          # 412 * 0.150 = 61.8
-	var hh: float = hw / 2.0                                  # isometric 2:1  = 30.9
-	var cy: float = _TERRAIN_OFFSET_Y                         # 0 = diamond at tile origin
+	var hw: float = _SPRITE_HW_PX * _TERRAIN_SCALE      # ≈64
+	var hh: float = _SPRITE_HH_PX * _TERRAIN_SCALE      # ≈36.9
+	var depth: float = _SPRITE_DEPTH_PX * _TERRAIN_SCALE # ≈73.7
+	var cy: float = _TERRAIN_OFFSET_Y
 
-	var pts: PackedVector2Array = PackedVector2Array([
-		Vector2( 0.0, cy - hh),  # top vertex
-		Vector2( hw,  cy),        # right vertex
-		Vector2( 0.0, cy + hh),  # bottom vertex
-		Vector2(-hw,  cy),        # left vertex
+	# Collision: hexagonal cube outline (full block is clickable/hoverable)
+	collision.polygon = PackedVector2Array([
+		Vector2( 0.0, cy - hh),
+		Vector2( hw,  cy),
+		Vector2( hw,  cy + depth),
+		Vector2( 0.0, cy + hh + depth),
+		Vector2(-hw,  cy + depth),
+		Vector2(-hw,  cy),
 	])
 
-	collision.polygon = pts           # mouse detection matches visible sprite
-
-	pts.append(Vector2(0.0, cy - hh)) # close border loop
-	border_line.points = pts
+	# Border: top diamond face only — absolute z_index keeps it above all terrain sprites
+	border_line.z_as_relative = false
+	border_line.z_index = 100
+	border_line.points = PackedVector2Array([
+		Vector2( 0.0, cy - hh),
+		Vector2( hw,  cy),
+		Vector2( 0.0, cy + hh),
+		Vector2(-hw,  cy),
+		Vector2( 0.0, cy - hh),  # close loop
+	])
 
 	depth_border_line.visible = false
 
@@ -277,7 +306,9 @@ func _setup_geometry() -> void:
 		Vector2(hw, 0)               # Right point
 	])
 
-	# Border outline (top diamond)
+	# Border outline (top diamond) — always renders above all terrain sprites
+	border_line.z_as_relative = false
+	border_line.z_index = 100
 	border_line.points = PackedVector2Array([
 		Vector2(0, -hh),
 		Vector2(hw, 0),
@@ -288,19 +319,15 @@ func _setup_geometry() -> void:
 
 ## Sets up input detection
 func _setup_input() -> void:
-	# Explicitly configure Area2D for input
-	area.input_pickable = true
-	area.monitoring = false  # We don't need collision detection
+	area.input_pickable = false  # Not using Area2D signals — hover managed in _process()
+	area.monitoring = false
 	area.monitorable = false
-
-	# Connect signals
-	area.mouse_entered.connect(_on_mouse_entered)
-	area.mouse_exited.connect(_on_mouse_exited)
 
 ## Creates a small hover label showing the plot name on the ground face
 func _setup_name_label() -> void:
 	name_label = Label.new()
-	name_label.z_index = 5
+	name_label.z_as_relative = false
+	name_label.z_index = 110
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.position = Vector2(-35, 22)
@@ -400,21 +427,12 @@ func _animate_hover_out() -> void:
 	hover_tween.tween_property(self, "scale", Vector2.ONE, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	hover_tween.tween_property(self, "modulate", Color.WHITE, 0.2)
 
-func _on_mouse_entered() -> void:
-	if plot_data and plot_data.is_biddable():
-		is_hovered = true
-		hovered.emit(self)
-		update_visual_state()
-
-func _on_mouse_exited() -> void:
-	is_hovered = false
-	update_visual_state()
-
 ## Creates the NPC pinpoint panel positioned above the tile
 func _setup_npc_pin() -> void:
 	npc_pin = PanelContainer.new()
 	npc_pin.visible = false
-	npc_pin.z_index = 10
+	npc_pin.z_as_relative = false
+	npc_pin.z_index = 110
 	# Center the 130px-wide pin horizontally over the tile's top vertex
 	# Tile top vertex is at (0, -ISO_TILE_HEIGHT/2) = (0, -32)
 	# Pin sits 8px above that, pinning bottom edge at -40 for a ~30px tall container

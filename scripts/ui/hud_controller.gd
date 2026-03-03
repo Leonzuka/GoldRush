@@ -12,6 +12,7 @@ extends Control
 @onready var gold_label: Label = $BottomBar/GoldChip/GoldLabel
 @onready var storage_bar: ProgressBar = $BottomBar/StorageBar
 @onready var scan_button: Button = $BottomBar/ScanButton
+@onready var end_button: Button = $BottomBar/EndButton
 
 # FPS counter (created programmatically)
 var fps_label: Label
@@ -35,6 +36,9 @@ func _ready() -> void:
 	EventBus.resource_storage_changed.connect(_on_storage_changed)
 	EventBus.money_changed.connect(_on_money_changed)
 	EventBus.scanner_cooldown_changed.connect(_on_scanner_cooldown_changed)
+	EventBus.storage_goal_reached.connect(_on_storage_goal_reached)
+
+	end_button.pressed.connect(func(): EventBus.end_mining_requested.emit())
 
 	# Create FPS counter
 	_create_fps_counter()
@@ -56,6 +60,9 @@ func _apply_styles() -> void:
 	# Scan button
 	scan_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
 
+	# End Early button
+	end_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
+
 	# Bold font on time label
 	if UITheme.font_body_bold:
 		time_label.add_theme_font_override("font", UITheme.font_body_bold)
@@ -64,7 +71,8 @@ func _apply_styles() -> void:
 ## Setup tooltips for UI elements
 func _setup_tooltips() -> void:
 	scan_button.tooltip_text = "Detect nearby gold (Press E)\nCooldown: 3 seconds"
-	storage_bar.tooltip_text = "Gold storage capacity\nReturn to the truck when full"
+	storage_bar.tooltip_text = "Gold collected this round\nFill to %d for a $%d bonus!" % [Config.STORAGE_CAPACITY, Config.STORAGE_GOAL_BONUS]
+	end_button.tooltip_text = "End mining early and go to results"
 
 ## Create FPS counter label programmatically
 func _create_fps_counter() -> void:
@@ -98,9 +106,26 @@ func _on_time_updated(time_remaining: float) -> void:
 	time_label.text = "%02d:%02d" % [minutes, seconds]
 
 func _on_storage_changed(current: int, max_capacity: int) -> void:
-	gold_label.text = "Gold: %d/%d" % [current, max_capacity]
-	storage_bar.max_value = max_capacity
-	storage_bar.value = current
+	if current >= max_capacity:
+		gold_label.text = "Gold: %d ★" % current
+		storage_bar.value = max_capacity
+	else:
+		gold_label.text = "Gold: %d/%d" % [current, max_capacity]
+		storage_bar.max_value = max_capacity
+		storage_bar.value = current
+
+func _on_storage_goal_reached() -> void:
+	# Flash gold label gold color to celebrate the bonus
+	var flash := create_tween()
+	flash.tween_property(gold_label, "modulate", UITheme.COLOR_GOLD_BRIGHT, 0.1)
+	flash.tween_property(gold_label, "modulate", Color.WHITE, 0.5)
+
+	# Scale punch
+	var punch := create_tween()
+	punch.tween_property(gold_label, "scale", Vector2(1.3, 1.3), 0.15) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	punch.tween_property(gold_label, "scale", Vector2.ONE, 0.3) \
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 func _on_money_changed(new_amount: int) -> void:
 	_animate_money_change(new_amount)

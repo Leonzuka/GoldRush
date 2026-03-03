@@ -52,6 +52,15 @@ signal session_time_updated(time_remaining: float)
 ## @param stats: Dictionary with gold_collected, time_used, efficiency
 signal round_ended(stats: Dictionary)
 
+## Emitted when player clicks Continue on the round end panel
+signal round_end_confirmed()
+
+## Emitted when player first fills the storage goal (one-time per session)
+signal storage_goal_reached()
+
+## Emitted when player presses the "End Mining" button in HUD
+signal end_mining_requested()
+
 # ============================================================================
 # GAME FLOW SIGNALS
 # ============================================================================
