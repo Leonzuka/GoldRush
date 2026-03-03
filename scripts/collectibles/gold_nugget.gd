@@ -7,7 +7,7 @@ extends Area2D
 # ============================================================================
 
 var gold_value: int = 10
-var collection_speed: float = 200.0
+var collection_speed: float = 65.0
 var player: Node2D = null
 var is_collected: bool = false
 
@@ -15,8 +15,17 @@ var is_collected: bool = false
 # INITIALIZATION
 # ============================================================================
 
+## Target display size in pixels for the Gold.png sprite
+const DISPLAY_PX: float = 12.0
+
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+
+	# Auto-scale Gold.png sprite to DISPLAY_PX regardless of source resolution
+	var sprite := get_node_or_null("Sprite2D") as Sprite2D
+	if sprite and sprite.texture:
+		var tex_size: Vector2 = sprite.texture.get_size()
+		sprite.scale = Vector2(DISPLAY_PX / tex_size.x, DISPLAY_PX / tex_size.y)
 
 	# Find player
 	await get_tree().process_frame

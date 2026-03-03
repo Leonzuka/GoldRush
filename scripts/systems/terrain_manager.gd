@@ -25,6 +25,16 @@ class_name TerrainManager
 ## Key: Vector2i (tile position), Value: Dictionary {amount, richness, revealed}
 var gold_deposits: Dictionary = {}
 
+## Rare deposit data (NOT stored in TileMap)
+## Key: Vector2i (tile position), Value: Dictionary {type: String, amount: int}
+## Types: "diamond", "relic"
+var rare_deposits: Dictionary = {}
+
+## Fossil decoration nodes (always visible in terrain, destroyed when tile is dug)
+## Key: Vector2i (tile position), Value: Sprite2D node
+var fossil_decorations: Dictionary = {}
+var fossil_container: Node2D
+
 ## Gold indicator visuals for scanner feedback
 ## Key: Vector2i (tile position), Value: Node2D (indicator)
 var gold_indicators: Dictionary = {}
@@ -54,7 +64,13 @@ func generate_terrain(seed_value: int, gold_richness: float) -> void:
 	# Clear existing data
 	tilemap.clear()
 	gold_deposits.clear()
+	rare_deposits.clear()
 	bedrock_tiles.clear()
+
+	# Remove old fossil decoration nodes
+	for node in fossil_decorations.values():
+		node.queue_free()
+	fossil_decorations.clear()
 
 	# Generate terrain layers
 	_generate_terrain_tiles()
@@ -63,10 +79,14 @@ func generate_terrain(seed_value: int, gold_richness: float) -> void:
 	var deposit_count: int = Config.get_deposit_count(gold_richness)
 	_generate_gold_deposits(deposit_count)
 
+	# Place rare deposits (diamond, relic) and fossil decorations
+	_generate_rare_deposits()
+	_generate_fossil_decorations()
+
 	# Trigger bedrock visual overlay render
 	queue_redraw()
 
-	print("[Terrain] Generated: Seed=%d, Richness=%.2f, Deposits=%d, Bedrock=%d" % [seed_value, gold_richness, deposit_count, bedrock_tiles.size()])
+	print("[Terrain] Generated: Seed=%d, Richness=%.2f, Deposits=%d, Rare=%d, Fossils=%d, Bedrock=%d" % [seed_value, gold_richness, deposit_count, rare_deposits.size(), fossil_decorations.size(), bedrock_tiles.size()])
 
 ## Fill TileMap with layered terrain
 ## Side columns (x=0, x=terrain_width-1) are always bedrock walls.
@@ -112,6 +132,111 @@ func _generate_gold_deposits(count: int) -> void:
 
 		var cluster_size: int = randi_range(3, 8)
 		_create_gold_cluster(cluster_center, cluster_size)
+
+## Generate rare deposits (diamond, relic) scattered across the terrain
+func _generate_rare_deposits() -> void:
+	var rare_types: Array[Dictionary] = [
+		{
+			"type": "diamond",
+			"count_min": Config.DIAMOND_COUNT_MIN,
+			"count_max": Config.DIAMOND_COUNT_MAX,
+			"value_min": Config.DIAMOND_VALUE_MIN,
+			"value_max": Config.DIAMOND_VALUE_MAX,
+			"min_depth": Config.DIAMOND_MIN_DEPTH,
+		},
+		{
+			"type": "relic",
+			"count_min": Config.RELIC_COUNT_MIN,
+			"count_max": Config.RELIC_COUNT_MAX,
+			"value_min": Config.RELIC_VALUE_MIN,
+			"value_max": Config.RELIC_VALUE_MAX,
+			"min_depth": Config.RELIC_MIN_DEPTH,
+		},
+	]
+
+	for entry in rare_types:
+		var count: int = randi_range(entry.count_min, entry.count_max)
+		for i in range(count):
+			_place_rare_deposit(entry.type, entry.min_depth, entry.value_min, entry.value_max)
+
+## Spawn Fossil.png sprites as visible terrain decorations (not collectible).
+## Each fossil occupies a 2×2 tile block; all 4 tiles point to the same sprite.
+## Destroying any of the 4 tiles removes the entire fossil.
+func _generate_fossil_decorations() -> void:
+	var fossil_texture: Texture2D = load("res://assets/sprites/Fossil.png")
+	if not fossil_texture:
+		return
+
+	var tex_size: Vector2 = fossil_texture.get_size()
+	var display: float = Config.FOSSIL_DISPLAY_PX
+	var count: int = randi_range(Config.FOSSIL_COUNT_MIN, Config.FOSSIL_COUNT_MAX)
+
+	for _i in range(count):
+		for _attempt in range(30):
+			# Pick the top-left corner of the 2×2 block
+			var pos := Vector2i(
+				randi_range(3, terrain_width - 5),
+				randi_range(Config.FOSSIL_MIN_DEPTH, terrain_height - 10)
+			)
+
+			# Build the 4 tile positions of the block
+			var block: Array[Vector2i] = [
+				pos,
+				pos + Vector2i(1, 0),
+				pos + Vector2i(0, 1),
+				pos + Vector2i(1, 1),
+			]
+
+			# All 4 tiles must be solid, diggable, and unoccupied
+			var valid := true
+			for tile in block:
+				if gold_deposits.has(tile) or rare_deposits.has(tile) or fossil_decorations.has(tile):
+					valid = false
+					break
+				var atlas: Vector2i = tilemap.get_cell_atlas_coords(0, tile)
+				if atlas == TILE_BEDROCK_ATLAS or tilemap.get_cell_source_id(0, tile) == TILE_EMPTY:
+					valid = false
+					break
+			if not valid:
+				continue
+
+			# Sprite is centered on the 2×2 block (half-tile offset from top-left center)
+			var sprite := Sprite2D.new()
+			sprite.texture = fossil_texture
+			sprite.scale = Vector2(display / tex_size.x, display / tex_size.y)
+			sprite.position = tilemap.map_to_local(pos) + Vector2(Config.TILE_SIZE * 0.5, Config.TILE_SIZE * 0.5)
+			sprite.z_index = 3
+			fossil_container.add_child(sprite)
+
+			# Register all 4 tile positions → same sprite
+			for tile in block:
+				fossil_decorations[tile] = sprite
+
+			break  # Placed — move to next fossil
+
+## Place a single rare deposit at a valid random tile
+func _place_rare_deposit(type: String, min_depth: int, value_min: int, value_max: int) -> void:
+	# Try up to 20 random positions to find a valid diggable tile
+	for _attempt in range(20):
+		var pos := Vector2i(
+			randi_range(5, terrain_width - 5),
+			randi_range(min_depth, terrain_height - 8)
+		)
+
+		# Skip if occupied by gold, another rare, or not a diggable tile
+		if gold_deposits.has(pos) or rare_deposits.has(pos):
+			continue
+		var tile_atlas: Vector2i = tilemap.get_cell_atlas_coords(0, pos)
+		if tile_atlas == TILE_BEDROCK_ATLAS:
+			continue
+		if tilemap.get_cell_source_id(0, pos) == TILE_EMPTY:
+			continue
+
+		rare_deposits[pos] = {
+			"type": type,
+			"amount": randi_range(value_min, value_max),
+		}
+		return  # Placed successfully
 
 ## Create gold deposits in cluster pattern
 func _create_gold_cluster(center: Vector2i, size: int) -> void:
@@ -163,17 +288,40 @@ func dig_tile(tile_pos: Vector2i) -> Dictionary:
 	tilemap.set_cell(0, tile_pos, -1, Vector2i(-1, -1))
 
 	# Check for gold
-	var result: Dictionary = {success = true, has_gold = false, gold_amount = 0}
+	var result: Dictionary = {
+		success = true,
+		has_gold = false, gold_amount = 0,
+		has_rare = false, rare_type = "", rare_amount = 0,
+	}
 	if gold_deposits.has(tile_pos):
 		var deposit: Dictionary = gold_deposits[tile_pos]
 		result.has_gold = true
 		result.gold_amount = deposit.amount
 		gold_deposits.erase(tile_pos)
 
+	# Check for rare deposit (mutually exclusive with gold — rare takes priority)
+	if not result.has_gold and rare_deposits.has(tile_pos):
+		var rare: Dictionary = rare_deposits[tile_pos]
+		result.has_rare = true
+		result.rare_type = rare.type
+		result.rare_amount = rare.amount
+		rare_deposits.erase(tile_pos)
+
 	# Remove gold indicator if exists
 	if gold_indicators.has(tile_pos):
 		gold_indicators[tile_pos].queue_free()
 		gold_indicators.erase(tile_pos)
+
+	# Remove fossil decoration if exists — clears all 4 tiles of the 2×2 block
+	if fossil_decorations.has(tile_pos):
+		var fossil_sprite: Node = fossil_decorations[tile_pos]
+		var to_remove: Array[Vector2i] = []
+		for fpos in fossil_decorations.keys():
+			if fossil_decorations[fpos] == fossil_sprite:
+				to_remove.append(fpos)
+		for fpos in to_remove:
+			fossil_decorations.erase(fpos)
+		fossil_sprite.queue_free()
 
 	EventBus.tile_dug.emit(tile_pos)
 	return result
@@ -236,6 +384,11 @@ func _ready() -> void:
 	indicator_container = Node2D.new()
 	indicator_container.name = "GoldIndicators"
 	add_child(indicator_container)
+
+	# Create container for fossil decoration sprites
+	fossil_container = Node2D.new()
+	fossil_container.name = "FossilDecorations"
+	add_child(fossil_container)
 
 var debug_mode: bool = false
 

@@ -12,6 +12,7 @@ class_name IsometricMapController
 var plot_tiles: Dictionary = {}  # Key: Vector2i grid_pos, Value: PlotTile
 var auction_system: AuctionSystem
 var ui_controller: Control  # Reference to AuctionUIController
+var selected_tile: PlotTile = null
 
 func _ready() -> void:
 	# Start background loading of mine animation frames as early as possible
@@ -82,6 +83,7 @@ func _clear_map() -> void:
 	for child in plot_grid.get_children():
 		child.queue_free()
 	plot_tiles.clear()
+	selected_tile = null
 
 ## Converts grid coordinates (col, row) to isometric screen position.
 ## Uses the actual sprite diamond half-height for y-spacing so tiles
@@ -112,8 +114,18 @@ func _center_camera() -> void:
 			center.x, center.y, camera.position
 		])
 
-## Propagates plot click to UI controller
+## Propagates plot click to UI controller and marks tile as selected
 func _on_plot_clicked(tile: PlotTile) -> void:
+	# Deselect previous tile
+	if selected_tile and is_instance_valid(selected_tile) and selected_tile != tile:
+		selected_tile.is_selected = false
+		selected_tile.update_visual_state()
+
+	# Select new tile
+	selected_tile = tile
+	tile.is_selected = true
+	tile.update_visual_state()
+
 	if ui_controller:
 		if ui_controller.has_method("show_plot_info"):
 			ui_controller.show_plot_info(tile.plot_data)

@@ -10,6 +10,7 @@ class_name DrillComponent
 @export var drill_speed: float = Config.DRILL_SPEED
 @export var drill_reach: float = Config.DRILL_REACH
 @export var gold_nugget_scene: PackedScene
+@export var rare_collectible_scene: PackedScene
 
 # ============================================================================
 # REFERENCES
@@ -45,6 +46,9 @@ func _ready() -> void:
 
 	if not gold_nugget_scene:
 		gold_nugget_scene = load("res://scenes/mining/gold_nugget.tscn")
+
+	if not rare_collectible_scene:
+		rare_collectible_scene = load("res://scenes/mining/rare_collectible.tscn")
 
 	# Create crack overlay (lives in scene root so z_index works globally)
 	_drill_overlay = DrillOverlay.new()
@@ -138,6 +142,9 @@ func attempt_drill(tile_pos: Vector2i, delta: float) -> void:
 			if result.has_gold:
 				_spawn_gold_sparks(tile_pos)
 				spawn_gold_nugget(tile_pos, result.gold_amount)
+			elif result.has_rare:
+				_spawn_rare_sparks(tile_pos, result.rare_type)
+				spawn_rare_collectible(tile_pos, result.rare_type, result.rare_amount)
 
 		drill_progress = 0.0
 
@@ -166,6 +173,21 @@ func spawn_gold_nugget(tile_pos: Vector2i, amount: int) -> void:
 		container.add_child(nugget)
 	else:
 		get_tree().root.add_child(nugget)
+
+func spawn_rare_collectible(tile_pos: Vector2i, type: String, amount: int) -> void:
+	if not rare_collectible_scene:
+		return
+
+	var collectible: Node = rare_collectible_scene.instantiate()
+	collectible.collectible_type = type
+	collectible.collectible_value = amount
+	collectible.global_position = terrain_manager.tile_to_world(tile_pos)
+
+	var container: Node = get_tree().get_first_node_in_group("nugget_container")
+	if container:
+		container.add_child(collectible)
+	else:
+		get_tree().root.add_child(collectible)
 
 # ============================================================================
 # EFFECTS
@@ -230,6 +252,49 @@ func _spawn_bedrock_sparks(tile_pos: Vector2i) -> void:
 	sparks.global_position = terrain_manager.tile_to_world(tile_pos)
 	sparks.finished.connect(sparks.queue_free)
 	get_tree().root.add_child(sparks)
+
+## Spawn colored sparks when a rare item is found
+func _spawn_rare_sparks(tile_pos: Vector2i, type: String) -> void:
+	var sparks := CPUParticles2D.new()
+	sparks.emitting = true
+	sparks.amount = 24
+	sparks.lifetime = 1.0
+	sparks.one_shot = true
+	sparks.explosiveness = 0.95
+	sparks.direction = Vector2(0, -1)
+	sparks.spread = 180.0
+	sparks.initial_velocity_min = 50.0
+	sparks.initial_velocity_max = 110.0
+	sparks.gravity = Vector2(0, 60)
+	sparks.scale_amount_min = 1.5
+	sparks.scale_amount_max = 3.0
+	sparks.color_ramp = _create_rare_gradient(type)
+	sparks.global_position = terrain_manager.tile_to_world(tile_pos)
+	sparks.finished.connect(sparks.queue_free)
+	get_tree().root.add_child(sparks)
+
+## Create a type-specific gradient for rare item spark particles
+func _create_rare_gradient(type: String) -> Gradient:
+	var gradient := Gradient.new()
+	match type:
+		"diamond":
+			gradient.set_offset(0, 0.0)
+			gradient.set_color(0, Color(0.6, 0.95, 1.0, 1.0))    # Icy cyan
+			gradient.add_point(0.4, Color(0.3, 0.75, 1.0, 0.9))  # Blue
+			gradient.set_offset(2, 1.0)
+			gradient.set_color(2, Color(0.1, 0.3, 0.8, 0.0))     # Fade deep blue
+		"relic":
+			gradient.set_offset(0, 0.0)
+			gradient.set_color(0, Color(1.0, 0.8, 1.0, 1.0))     # Pale magenta
+			gradient.add_point(0.4, Color(0.85, 0.2, 1.0, 0.9))  # Purple
+			gradient.set_offset(2, 1.0)
+			gradient.set_color(2, Color(0.5, 0.0, 0.6, 0.0))     # Fade dark purple
+		_:
+			gradient.set_offset(0, 0.0)
+			gradient.set_color(0, Color(1.0, 1.0, 1.0, 1.0))
+			gradient.set_offset(1, 1.0)
+			gradient.set_color(1, Color(1.0, 1.0, 1.0, 0.0))
+	return gradient
 
 ## Create a gold-colored gradient for spark particles
 func _create_gold_gradient() -> Gradient:

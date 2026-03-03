@@ -28,6 +28,9 @@ var money_tween: Tween
 var displayed_money: int = 0
 var npc_turn_active: bool = true  # Blocks player bids while NPCs are choosing
 
+# FPS counter (created programmatically)
+var fps_label: Label
+
 # NPC roster sidebar (created in code, left edge)
 var npc_roster: PanelContainer
 var npc_entries: Dictionary = {}  # name → {container, avatar, status_lbl, claimed}
@@ -53,6 +56,7 @@ func _ready() -> void:
 	get_tree().root.size_changed.connect(_on_window_resized)
 
 	_apply_auction_styles()
+	_create_fps_label()
 
 	# Connect signals
 	EventBus.money_changed.connect(_on_money_changed)
@@ -86,6 +90,22 @@ func _ready() -> void:
 	info_label.text = "Rivals are choosing their plots..."
 	_set_all_npc_status("Analyzing market...")
 	auction_system.start_npc_turn()
+
+func _process(_delta: float) -> void:
+	if fps_label:
+		fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
+
+func _create_fps_label() -> void:
+	fps_label = Label.new()
+	fps_label.name = "FPSLabel"
+	fps_label.add_theme_font_size_override("font_size", 14)
+	fps_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	fps_label.offset_left = -90
+	fps_label.offset_top = 10
+	fps_label.offset_right = -10
+	fps_label.offset_bottom = 30
+	fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	$UILayer.add_child(fps_label)
 
 func _apply_auction_styles() -> void:
 	# ---- TOP BAR BACKGROUND ----

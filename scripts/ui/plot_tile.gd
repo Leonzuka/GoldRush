@@ -65,6 +65,7 @@ const NPC_IMAGES: Dictionary = {
 }
 
 var is_hovered: bool = false
+var is_selected: bool = false
 var hover_tween: Tween
 var pulse_tween: Tween
 var pin_tween: Tween
@@ -365,6 +366,17 @@ func update_visual_state() -> void:
 			if is_hovered:
 				border_line.visible = true
 				_animate_hover_in()
+				if name_label:
+					name_label.text = plot_data.plot_name
+					name_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.55))
+					name_label.visible = true
+			elif is_selected:
+				border_line.visible = true
+				border_line.width = 2.5
+				border_line.default_color = UITheme.COLOR_GOLD_PRIMARY
+				hover_tween = create_tween().set_parallel(true)
+				hover_tween.tween_property(self, "scale", Vector2(1.05, 1.05), 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+				hover_tween.tween_property(self, "modulate", Color(1.1, 1.05, 0.95), 0.15)
 				if name_label:
 					name_label.text = plot_data.plot_name
 					name_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.55))

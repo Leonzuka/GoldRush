@@ -9,7 +9,7 @@ extends Control
 @onready var round_label: Label = $TopBar/RoundChip/RoundLabel
 @onready var time_label: Label = $TopBar/TimeChip/TimeLabel
 @onready var money_label: Label = $TopBar/MoneyChip/MoneyLabel
-@onready var gold_label: Label = $BottomBar/GoldChip/GoldLabel
+@onready var gold_label: Label = $BottomBar/GoldChip/GoldRow/GoldLabel
 @onready var storage_bar: ProgressBar = $BottomBar/StorageBar
 @onready var scan_button: Button = $BottomBar/ScanButton
 @onready var end_button: Button = $BottomBar/EndButton
@@ -107,10 +107,10 @@ func _on_time_updated(time_remaining: float) -> void:
 
 func _on_storage_changed(current: int, max_capacity: int) -> void:
 	if current >= max_capacity:
-		gold_label.text = "Gold: %d ★" % current
+		gold_label.text = "%d ★" % current
 		storage_bar.value = max_capacity
 	else:
-		gold_label.text = "Gold: %d/%d" % [current, max_capacity]
+		gold_label.text = "%d/%d" % [current, max_capacity]
 		storage_bar.max_value = max_capacity
 		storage_bar.value = current
 

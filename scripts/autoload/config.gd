@@ -42,6 +42,30 @@ const MIN_GOLD_AMOUNT: int = 15
 const MAX_GOLD_AMOUNT: int = 60
 
 # ============================================================================
+# RARE COLLECTIBLE CONSTANTS
+# ============================================================================
+
+## Diamond: rare, deep (row 30+), high value
+const DIAMOND_COUNT_MIN: int = 2
+const DIAMOND_COUNT_MAX: int = 4
+const DIAMOND_VALUE_MIN: int = 200
+const DIAMOND_VALUE_MAX: int = 400
+const DIAMOND_MIN_DEPTH: int = 30    # Tile row
+
+## Relic: very rare, anywhere deep, extreme value
+const RELIC_COUNT_MIN: int = 1
+const RELIC_COUNT_MAX: int = 2
+const RELIC_VALUE_MIN: int = 400
+const RELIC_VALUE_MAX: int = 800
+const RELIC_MIN_DEPTH: int = 20
+
+## Fossil: visible terrain decoration (not collectible) — always visible to player
+const FOSSIL_COUNT_MIN: int = 5
+const FOSSIL_COUNT_MAX: int = 10
+const FOSSIL_MIN_DEPTH: int = 10    # Row 10+
+const FOSSIL_DISPLAY_PX: float = 32.0  # 2×2 tiles (2 * TILE_SIZE)
+
+# ============================================================================
 # AUCTION CONSTANTS
 # ============================================================================
 

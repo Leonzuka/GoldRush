@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dptwrvk52oqil"]
+[gd_scene load_steps=3 format=3 uid="uid://dptwrvk52oqil"]
 
 [ext_resource type="Script" path="res://scripts/ui/hud_controller.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://assets/sprites/Gold.png" id="2_gold_tex"]
 
 [node name="HUD" type="Control"]
 layout_mode = 3
@@ -69,9 +70,24 @@ theme_override_constants/separation = 8
 [node name="GoldChip" type="PanelContainer" parent="BottomBar"]
 layout_mode = 2
 
-[node name="GoldLabel" type="Label" parent="BottomBar/GoldChip"]
+[node name="GoldRow" type="HBoxContainer" parent="BottomBar/GoldChip"]
 layout_mode = 2
-text = "Gold: 0/500"
+theme_override_constants/separation = 6
+
+[node name="GoldIcon" type="TextureRect" parent="BottomBar/GoldChip/GoldRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(20, 20)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = ExtResource("2_gold_tex")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GoldLabel" type="Label" parent="BottomBar/GoldChip/GoldRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 15
+text = "0/500"
 
 [node name="StorageBar" type="ProgressBar" parent="BottomBar"]
 custom_minimum_size = Vector2(180, 18)

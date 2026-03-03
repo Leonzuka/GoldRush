@@ -16,6 +16,7 @@ class_name MiningSession
 
 var elapsed_time: float = 0.0
 var gold_collected: int = 0
+var rare_items_collected: Dictionary = {}  # type → count
 var is_active: bool = false
 var _storage_goal_reached: bool = false
 
@@ -29,6 +30,7 @@ var terrain_manager: TerrainManager = null
 func _ready() -> void:
 	print("[MiningSession] _ready() called")
 	EventBus.gold_collected.connect(_on_gold_collected)
+	EventBus.rare_collected.connect(_on_rare_collected)
 	EventBus.mining_started.connect(_on_mining_started)
 	EventBus.end_mining_requested.connect(_on_end_mining_requested)
 	print("[MiningSession] Connected to signals, waiting for mining_started event")
@@ -41,6 +43,7 @@ func start_session() -> void:
 	print("[MiningSession] start_session() called")
 	elapsed_time = 0.0
 	gold_collected = 0
+	rare_items_collected = {}
 	is_active = true
 	_storage_goal_reached = false
 	EventBus.resource_storage_changed.emit(0, storage_capacity)
@@ -68,7 +71,8 @@ func end_session(reason: String = "Unknown") -> void:
 		"gold_collected": gold_collected,
 		"time_used": elapsed_time,
 		"efficiency": gold_collected / max(elapsed_time, 0.1),
-		"reason": reason
+		"reason": reason,
+		"rare_items": rare_items_collected.duplicate(),
 	}
 
 	print("[Session] Ended: %s | Gold: %d | Time: %.1fs" % [reason, gold_collected, elapsed_time])
@@ -89,6 +93,15 @@ func _on_gold_collected(amount: int) -> void:
 	if not _storage_goal_reached and gold_collected >= storage_capacity:
 		_storage_goal_reached = true
 		EventBus.storage_goal_reached.emit()
+
+func _on_rare_collected(type: String, amount: int) -> void:
+	if not is_active:
+		return
+	# Rare items count toward gold storage (high value)
+	_on_gold_collected(amount)
+	# Track separately for round-end stats
+	rare_items_collected[type] = rare_items_collected.get(type, 0) + 1
+	print("[Session] Rare collected: %s (value=%d)" % [type, amount])
 
 func _on_end_mining_requested() -> void:
 	end_session("Player ended")

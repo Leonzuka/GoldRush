@@ -35,6 +35,11 @@ signal scanner_cooldown_changed(remaining: float)
 ## @param amount: Gold units collected
 signal gold_collected(amount: int)
 
+## Emitted when player collects a rare item (diamond, fossil, relic)
+## @param collectible_type: "diamond", "fossil", or "relic"
+## @param amount: Gold-equivalent value of the rare item
+signal rare_collected(collectible_type: String, amount: int)
+
 ## Emitted when resource storage changes
 ## @param current: Current gold stored
 ## @param max_capacity: Maximum storage limit
