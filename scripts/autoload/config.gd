@@ -80,13 +80,62 @@ const ISO_TILE_HEIGHT: int = 64   # Diamond height in pixels
 const ISO_TILE_DEPTH: int = 32    # Visual depth for 2.5D effect
 
 # NPC configuration
-const NPC_COUNT_PER_AUCTION: int = 3
+const NPC_COUNT_PER_AUCTION: int = 4
 const NPC_BID_DELAY: float = 2.0  # Seconds between NPC actions
-const NPC_NAMES: Array[String] = ["Big Bob", "Sly Sally", "Mad Max"]
+const NPC_NAMES: Array[String] = ["Big Bob", "Sly Sally", "Mad Max", "Lily"]
 const NPC_COLORS: Dictionary = {
 	"Big Bob":   Color(0.9, 0.5, 0.1),
 	"Sly Sally": Color(0.6, 0.2, 0.8),
 	"Mad Max":   Color(0.9, 0.15, 0.15),
+	"Lily":      Color(0.2, 0.75, 0.5),
+}
+
+## NPC portrait image paths (used by auction UI and minigame)
+const NPC_IMAGES: Dictionary = {
+	"Big Bob":   "res://assets/sprites/NPC's/BigBob.png",
+	"Sly Sally": "res://assets/sprites/NPC's/SlySally.png",
+	"Mad Max":   "res://assets/sprites/NPC's/MadMAx.png",
+	"Lily":      "res://assets/sprites/NPC's/Lily.png",
+}
+
+## Fixed personality profiles per NPC — used by NPCAuctionAgent
+const NPC_PROFILES: Dictionary = {
+	"Big Bob": {
+		"personality": "conservative",
+		"budget_min": 400,  "budget_max": 900,
+		"richness_bias": 0.65,
+		"claim_threshold": 0.25,
+		"rps_weights": [0.5, 0.3, 0.2],   # Favors Rock
+		"sabotage_chance": 0.05,
+		"challenge_chance": 0.2,
+	},
+	"Sly Sally": {
+		"personality": "cunning",
+		"budget_min": 700,  "budget_max": 1400,
+		"richness_bias": 1.15,
+		"claim_threshold": 0.35,
+		"rps_weights": [0.15, 0.35, 0.5],  # Favors Scissors
+		"sabotage_chance": 0.35,
+		"challenge_chance": 0.5,
+	},
+	"Mad Max": {
+		"personality": "aggressive",
+		"budget_min": 900,  "budget_max": 1800,
+		"richness_bias": 1.35,
+		"claim_threshold": 0.2,
+		"rps_weights": [0.65, 0.2, 0.15],  # Favors Rock (brute)
+		"sabotage_chance": 0.4,
+		"challenge_chance": 0.9,
+	},
+	"Lily": {
+		"personality": "smart",
+		"budget_min": 750,  "budget_max": 1500,
+		"richness_bias": 1.0,
+		"claim_threshold": 0.3,
+		"rps_weights": [0.33, 0.34, 0.33],  # Adapts to player history
+		"sabotage_chance": 0.2,
+		"challenge_chance": 0.55,
+	},
 }
 
 # Legacy NPC aggression (kept for compatibility)

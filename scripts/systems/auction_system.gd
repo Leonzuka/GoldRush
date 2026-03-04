@@ -11,35 +11,76 @@ class_name AuctionSystem
 class NPCAuctionAgent:
 	var agent_name: String
 	var budget: int
-	var aggression: float  # 0.0-1.0
-	var preferred_richness: float  # Bias for rich/poor plots
+	var aggression: float  # 0.0-1.0, scales with round
+	var personality: String
+	var richness_bias: float
+	var claim_threshold: float
+	var rps_weights: Array        # [rock_w, paper_w, scissors_w]
+	var sabotage_chance: float
+	var challenge_chance: float
 	var owned_plot: PlotData = null
 
 	func _init(name: String, round_num: int):
 		agent_name = name
-		budget = randi_range(500, 1500)
-		aggression = 0.2 + (round_num * 0.05)  # Scales with round
-		aggression = clamp(aggression, 0.2, 0.8)
-		preferred_richness = randf_range(0.3, 1.3)
+		var profile = Config.NPC_PROFILES.get(name, {})
+		budget = randi_range(
+			profile.get("budget_min", 500),
+			profile.get("budget_max", 1500)
+		)
+		personality = profile.get("personality", "balanced")
+		richness_bias = profile.get("richness_bias", 1.0)
+		claim_threshold = profile.get("claim_threshold", 0.3)
+		rps_weights = profile.get("rps_weights", [0.33, 0.34, 0.33])
+		sabotage_chance = profile.get("sabotage_chance", 0.1)
+		challenge_chance = profile.get("challenge_chance", 0.5)
+		aggression = clamp(0.2 + (round_num * 0.05), 0.2, 0.8)
 
-	## Calculate interest score for a plot (0.0-1.0)
-	func evaluate_plot(plot: PlotData) -> float:
+	## Calculate interest score for a plot (0.0-1.0) based on personality
+	## @param player_last_viewed: passed so Cunning can target the player's interest
+	func evaluate_plot(plot: PlotData, player_last_viewed: PlotData = null) -> float:
 		if not plot.is_biddable():
 			return 0.0
-
-		# Can't afford check
 		if budget < plot.base_price:
 			return 0.0
 
-		# Richness match score
-		var richness_match = 1.0 - abs(plot.gold_richness - preferred_richness)
+		var richness_match: float = clamp(1.0 - abs(plot.gold_richness - richness_bias), 0.0, 1.0)
+		var afford_factor: float = 1.0 - (float(plot.base_price) / float(budget))
 
-		# Affordability factor
-		var afford_factor = 1.0 - (float(plot.base_price) / budget)
+		match personality:
+			"conservative":
+				var score = richness_match * 0.4 + afford_factor * 0.6
+				if float(plot.base_price) < float(budget) * 0.5:
+					score += 0.1
+				return score
+			"aggressive":
+				if plot.gold_richness > 1.2:
+					return richness_match * 0.95  # Ignore affordability for rich plots
+				return richness_match * 0.8 + afford_factor * 0.2
+			"cunning":
+				var score = richness_match * 0.6 + afford_factor * 0.4
+				if player_last_viewed != null and plot == player_last_viewed:
+					score += 0.25  # Targets whatever the player is interested in
+				return score
+			"smart":
+				return richness_match * 0.55 + afford_factor * 0.45
+			_:
+				return richness_match * 0.6 + afford_factor * 0.4
 
-		# Multiply by aggression last — aggression caps at 0.25 in round 1,
-		# so raw score is used for the threshold comparison
-		return (richness_match * 0.6 + afford_factor * 0.4)
+	## Pick an RPS move; Smart personality counter-plays the player's last choice
+	## @param player_history: Array of player's past choices ["rock", "paper", ...]
+	func get_rps_choice(player_history: Array) -> String:
+		if personality == "smart" and player_history.size() >= 2:
+			var last = player_history[-1]
+			var counter := {"rock": "paper", "paper": "scissors", "scissors": "rock"}
+			return counter.get(last, "rock")
+		# Weighted random based on rps_weights [rock, paper, scissors]
+		var roll := randf()
+		if roll < rps_weights[0]:
+			return "rock"
+		elif roll < rps_weights[0] + rps_weights[1]:
+			return "paper"
+		else:
+			return "scissors"
 
 # ============================================================================
 # SIGNALS
@@ -56,6 +97,13 @@ signal npc_turn_finished()
 
 var available_plots: Array[PlotData] = []
 var npc_agents: Array[NPCAuctionAgent] = []
+
+## Updated by auction_ui_controller when player views a plot (for Cunning sabotage)
+var player_last_viewed_plot: PlotData = null
+
+## Tracks player's RPS choices so Lily can counter-learn
+var player_rps_history: Array = []
+
 var plot_names: Array[String] = [
 	"Sunset Valley", "Golden Hills", "Copper Creek",
 	"Silver Ridge", "Fortune Flats", "Nugget Gorge",
@@ -104,14 +152,10 @@ func generate_plots() -> Array[PlotData]:
 	return available_plots
 
 # ============================================================================
-# BIDDING
+# BIDDING (legacy path — used for available-plot bids)
 # ============================================================================
 
 ## Simulate NPC bidding on a plot
-## @param current_bid: Current highest bid
-## @param plot: The plot being bid on
-## @param round_number: Current game round (affects aggression)
-## @return New bid amount (same as current if NPC doesn't outbid)
 func simulate_npc_bid(current_bid: int, plot: PlotData, round_number: int) -> int:
 	var aggression: float = Config.get_npc_aggression(round_number)
 
@@ -126,10 +170,7 @@ func simulate_npc_bid(current_bid: int, plot: PlotData, round_number: int) -> in
 	return current_bid
 
 ## Process player bid on plot
-## @param plot: Selected plot
-## @param player_bid: Amount player is willing to pay
-## @param round_number: Current round
-## @return Dictionary: {won: bool, final_price: int}
+## @return Dictionary: {won: bool, final_price: int, reason: String}
 func process_bid(plot: PlotData, player_bid: int, round_number: int) -> Dictionary:
 	if not GameManager.can_afford(player_bid):
 		return {won = false, final_price = player_bid, reason = "Insufficient funds"}
@@ -155,28 +196,26 @@ func _create_npc_agents() -> void:
 		var agent = NPCAuctionAgent.new(Config.NPC_NAMES[i], GameManager.round_number)
 		npc_agents.append(agent)
 
-## NPCs select plots in sequence with visual delay
+## NPCs select plots in sequence with visual delay, then run sabotage events
 func start_npc_turn() -> void:
 	for agent in npc_agents:
 		if agent.owned_plot:
 			continue  # Already owns a plot
 
-		# Find best available plot
+		# Find best available plot using personality-weighted evaluation
 		var best_plot: PlotData = null
 		var best_score: float = -1.0
 
 		for plot in available_plots:
-			var score = agent.evaluate_plot(plot)
+			var score = agent.evaluate_plot(plot, player_last_viewed_plot)
 			if score > best_score:
 				best_score = score
 				best_plot = plot
 
-		# Claim plot if score is good enough (score is 0.0–1.0, aggression used as bid chance elsewhere)
-		if best_plot and best_score > 0.3:
-			# Phase 1: NPC is "considering" the plot (visual feedback)
+		# Claim plot only if score meets this agent's threshold
+		if best_plot and best_score > agent.claim_threshold:
 			npc_considering_plot.emit(best_plot, agent.agent_name)
 			await get_tree().create_timer(Config.NPC_BID_DELAY * 0.65).timeout
-			# Phase 2: NPC commits and claims
 			_npc_claim_plot(agent, best_plot)
 			await get_tree().create_timer(Config.NPC_BID_DELAY * 0.35).timeout
 
@@ -184,7 +223,7 @@ func start_npc_turn() -> void:
 	await get_tree().process_frame
 	npc_turn_finished.emit()
 
-## NPC claims a plot
+## NPC claims a plot, updating ownership and emitting signal
 func _npc_claim_plot(agent: NPCAuctionAgent, plot: PlotData) -> void:
 	plot.owner_type = PlotData.OwnerType.NPC
 	plot.owner_name = agent.agent_name
@@ -193,3 +232,10 @@ func _npc_claim_plot(agent: NPCAuctionAgent, plot: PlotData) -> void:
 
 	npc_claimed_plot.emit(plot, agent.agent_name)
 	print("[Auction] %s claimed %s for $%d" % [agent.agent_name, plot.plot_name, plot.base_price])
+
+## Returns the NPCAuctionAgent with the given name, or null
+func get_agent_by_name(search_name: String) -> NPCAuctionAgent:
+	for agent in npc_agents:
+		if agent.agent_name == search_name:
+			return agent
+	return null

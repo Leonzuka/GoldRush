@@ -26,7 +26,7 @@ var auction_system: AuctionSystem
 var selected_plot: PlotData = null
 var money_tween: Tween
 var displayed_money: int = 0
-var npc_turn_active: bool = true  # Blocks player bids while NPCs are choosing
+var npc_turn_active: bool = false  # Player goes first; NPCs run after player picks
 
 # FPS counter (created programmatically)
 var fps_label: Label
@@ -35,12 +35,8 @@ var fps_label: Label
 var npc_roster: PanelContainer
 var npc_entries: Dictionary = {}  # name → {container, avatar, status_lbl, claimed}
 
-# NPC portrait images
-const NPC_IMAGES: Dictionary = {
-	"Big Bob":   "res://assets/sprites/NPC's/BigBob.png",
-	"Sly Sally": "res://assets/sprites/NPC's/SlySally.png",
-	"Mad Max":   "res://assets/sprites/NPC's/MadMAx.png",
-}
+## MinigameRPSController class (script pre-loaded for challenge flow)
+const MinigameRPSController = preload("res://scripts/ui/minigame_rps_controller.gd")
 
 # ============================================================================
 # INITIALIZATION
@@ -85,11 +81,9 @@ func _ready() -> void:
 	# NOW generate plots (map is listening)
 	var _plots = auction_system.generate_plots()
 
-	# Wait for map to load, then start NPC turn
-	await get_tree().create_timer(1.5).timeout
-	info_label.text = "Rivals are choosing their plots..."
-	_set_all_npc_status("Analyzing market...")
-	auction_system.start_npc_turn()
+	# Player goes first — show the selection prompt immediately
+	await get_tree().create_timer(0.5).timeout
+	info_label.text = "Your turn!  Select an available plot."
 
 func _process(_delta: float) -> void:
 	if fps_label:
@@ -242,38 +236,54 @@ func _show_default_panel_state() -> void:
 ## Called when player selects a plot on the map
 func show_plot_info(plot: PlotData) -> void:
 	selected_plot = plot
+	# Track for Sly Sally's cunning sabotage
+	if auction_system:
+		auction_system.player_last_viewed_plot = plot
 
 	plot_name_label.text = plot.plot_name
 	richness_label.text = "★".repeat(plot.get_star_rating()) + "  " + plot.get_richness_tier()
 	price_label.text = "Starting Bid:  $%d" % plot.base_price
 
 	if plot.owner_type == PlotData.OwnerType.NPC:
+		var npc_color = Config.NPC_COLORS.get(plot.owner_name, UITheme.COLOR_DANGER)
 		status_label.text = "Claimed by %s" % plot.owner_name
-		status_label.add_theme_color_override("font_color", UITheme.COLOR_DANGER)
-		bid_button.disabled = true
-		bid_button.text = "Unavailable"
+		status_label.add_theme_color_override("font_color", npc_color)
+		bid_button.disabled = false
+		bid_button.text = "Challenge %s! ⚔" % plot.owner_name
+		bid_button.modulate = Color(1.0, 0.75, 0.2)
 	elif plot.owner_type == PlotData.OwnerType.PLAYER:
 		status_label.text = "✓ You own this plot"
 		status_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
 		bid_button.disabled = true
 		bid_button.text = "Acquired"
+		bid_button.modulate = Color.WHITE
 	elif npc_turn_active:
 		status_label.text = "Rivals are still choosing..."
 		status_label.add_theme_color_override("font_color", Color(0.65, 0.60, 0.50))
 		bid_button.disabled = true
 		bid_button.text = "Wait for Rivals"
+		bid_button.modulate = Color.WHITE
 	else:
 		status_label.text = "Available for bidding"
 		status_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
 		bid_button.disabled = not GameManager.can_afford(plot.base_price)
 		bid_button.text = "Place Bid  →" if not bid_button.disabled else "Insufficient Funds"
+		bid_button.modulate = Color.WHITE
 
 # ============================================================================
 # BIDDING
 # ============================================================================
 
 func _on_bid_button_pressed() -> void:
-	if not selected_plot or not selected_plot.is_biddable():
+	if not selected_plot:
+		return
+
+	# NPC-owned plot: start the challenge minigame instead of a normal bid
+	if selected_plot.owner_type == PlotData.OwnerType.NPC:
+		_start_challenge_minigame(selected_plot)
+		return
+
+	if not selected_plot.is_biddable():
 		return
 
 	var bid_price = selected_plot.base_price
@@ -287,12 +297,16 @@ func _on_bid_button_pressed() -> void:
 	selected_plot.final_bid_price = bid_price
 
 	# Visual feedback
-	info_label.text = "Plot acquired for $%d! Heading to the mines..." % bid_price
+	info_label.text = "Plot acquired for $%d! Rivals are now choosing..." % bid_price
 	show_plot_info(selected_plot)  # Refresh panel to show "✓ You own this plot"
 	map_controller.refresh_plot_visuals(selected_plot)
 
-	# Transition to mining
-	await get_tree().create_timer(1.5).timeout
+	# NPCs choose their plots — wait for them to finish before heading to the mines
+	_set_all_npc_status("Analyzing market...")
+	auction_system.start_npc_turn()
+	await auction_system.npc_turn_finished
+
+	await get_tree().create_timer(0.8).timeout
 	EventBus.auction_won.emit(selected_plot)
 
 # ============================================================================
@@ -336,12 +350,40 @@ func _on_npc_considering_plot(plot: PlotData, npc_name: String) -> void:
 
 func _on_npc_turn_finished() -> void:
 	npc_turn_active = false
-	info_label.text = "Your turn!  Select an available plot."
 	_set_all_npc_status("Done for now")
 	_deactivate_all_npc_entries()
-	# Refresh panel so bid button unlocks if player already has a plot selected
-	if selected_plot and selected_plot.owner_type == PlotData.OwnerType.AVAILABLE:
+	# If player hasn't picked yet, unlock bidding; otherwise keep the transition message
+	if selected_plot and selected_plot.owner_type != PlotData.OwnerType.PLAYER:
+		info_label.text = "Your turn!  Select an available plot."
 		show_plot_info(selected_plot)
+
+# ============================================================================
+# CHALLENGE MINIGAME
+# ============================================================================
+
+func _start_challenge_minigame(plot: PlotData) -> void:
+	var npc_agent = auction_system.get_agent_by_name(plot.owner_name) if auction_system else null
+	var minigame = MinigameRPSController.new()
+	$UILayer.add_child(minigame)
+	minigame.minigame_finished.connect(
+		func(player_won: bool, contested_plot: PlotData):
+			minigame.queue_free()
+			if player_won:
+				contested_plot.owner_type = PlotData.OwnerType.PLAYER
+				contested_plot.final_bid_price = contested_plot.base_price
+				info_label.text = "You won the duel! Heading to the mines..."
+				map_controller.refresh_plot_visuals(contested_plot)
+				show_plot_info(contested_plot)
+				# NPCs pick in the background; transition immediately
+				auction_system.start_npc_turn()
+				await get_tree().create_timer(1.5).timeout
+				EventBus.auction_won.emit(contested_plot)
+			else:
+				# NPC retains the plot — mark it blocked so no retry
+				info_label.text = "You lost the duel. %s keeps their claim." % contested_plot.owner_name
+				show_plot_info(contested_plot)
+	)
+	minigame.start_minigame(plot, plot.owner_name, npc_agent, auction_system)
 
 # ============================================================================
 # NPC ROSTER SIDEBAR
@@ -432,23 +474,33 @@ func _create_npc_entry(npc_name: String) -> Dictionary:
 	avatar.custom_minimum_size = Vector2(48, 48)
 	avatar.add_child(avatar_bg)
 
-	var img_path: String = NPC_IMAGES.get(npc_name, "")
-	if img_path:
-		var tex := load(img_path) as Texture2D
-		if tex:
-			var avatar_tex := TextureRect.new()
-			avatar_tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-			avatar_tex.texture = tex
-			avatar_tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-			avatar_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-			avatar_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			# Shader clips the square image to a circle
-			var shader := Shader.new()
-			shader.code = "shader_type canvas_item;\nvoid fragment() {\n\tvec2 uv = UV - vec2(0.5);\n\tif (length(uv) > 0.5) { discard; }\n\tCOLOR = texture(TEXTURE, UV);\n}"
-			var mat := ShaderMaterial.new()
-			mat.shader = shader
-			avatar_tex.material = mat
-			avatar.add_child(avatar_tex)
+	var img_path: String = Config.NPC_IMAGES.get(npc_name, "")
+	var tex: Texture2D = load(img_path) as Texture2D if not img_path.is_empty() else null
+	if tex:
+		var avatar_tex := TextureRect.new()
+		avatar_tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		avatar_tex.texture = tex
+		avatar_tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		avatar_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		avatar_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Shader clips the square image to a circle
+		var shader := Shader.new()
+		shader.code = "shader_type canvas_item;\nvoid fragment() {\n\tvec2 uv = UV - vec2(0.5);\n\tif (length(uv) > 0.5) { discard; }\n\tCOLOR = texture(TEXTURE, UV);\n}"
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		avatar_tex.material = mat
+		avatar.add_child(avatar_tex)
+	else:
+		# Procedural fallback: initial letter centered in the circle
+		var initial_lbl := Label.new()
+		initial_lbl.text = npc_name[0].to_upper() if npc_name.length() > 0 else "?"
+		initial_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		initial_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		initial_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		initial_lbl.add_theme_font_size_override("font_size", 22)
+		initial_lbl.add_theme_color_override("font_color", color.lightened(0.4))
+		initial_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		avatar.add_child(initial_lbl)
 
 	hbox.add_child(avatar)
 
@@ -538,6 +590,15 @@ func _deactivate_all_npc_entries() -> void:
 func _on_window_resized() -> void:
 	var new_size := Vector2i(get_viewport().get_visible_rect().size)
 	$MapViewport/SubViewport.size = new_size
+
+## Briefly flashes the NPC roster entry to draw attention to an event
+func _flash_npc_entry(npc_name: String) -> void:
+	var entry = npc_entries.get(npc_name)
+	if not entry:
+		return
+	var tween = entry["container"].create_tween()
+	tween.tween_property(entry["container"], "modulate", Color(1.5, 0.6, 0.6), 0.15)
+	tween.tween_property(entry["container"], "modulate", Color.WHITE, 0.5)
 
 ## Returns the initials of an NPC name (e.g. "Big Bob" → "BB")
 func _get_initials(npc_name: String) -> String:

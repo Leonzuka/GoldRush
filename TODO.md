@@ -1,14 +1,12 @@
 # GoldRush - TODO List
 
-## 🔴 Tarefas Imediatas (Sprint Atual)
-- Terras indisponíveis quando um NPC escolhe - add um Minigames durante o leilao (queda de braco, dado, jokenpo, etc) se tiver conflito sobre um terreno
-- Melhorar a lógica dos NPCs (com personalidade nas escolhas,etc) e acelerar um pouco a escolhas dos NPC após o 1 Leilão.
-- ### NPCs e Competicao
-- [ ] Sistema de sabotagem/interacao com rivais
-- [ ] Perfis de personalidade dos NPCs (agressivo, conservador, esperto)
+## 🔴 Tarefas Imediatas
 - [ ] Settings persistentes (volume, resolucao, fullscreen)
 ### Visual
 - [ ] Parallax background na cena de mineracao (ceu, nuvens)
+- Emprestimo para deixar o jogo mais dinâmico
+- Sistema de contratos (objetivos opcionais com recompensas: "ache 5 depositos em 30s")
+Quan
 
 ### Gameplay Core & Balanceamento
 - [ ] Validar balanceamento de dificuldade dos plots
@@ -92,11 +90,7 @@
 - [ ] Controller support (gamepad mapping)
 - [ ] Mobile port (touch controls)
 
-## 📝 Ideias Nao Priorizadas
-
-- Sistema de contratos (objetivos opcionais com recompensas: "ache 5 depositos em 30s")
-- Sistema de reputacao com os compradores (vender mais para um = melhores precos)
+## 📝 Ideias Secundárias
 - Customizacao visual do personagem (chapeus, picaretas, roupas)
 - Ferramentas especiais (dinamite abre 3x3, aspirador de ouro coleta a distancia)
 - Sistema de fadiga do player (precisa descansar apos X segundos)
-- Mercado negro com itens raros e ilegais (risco/recompensa)

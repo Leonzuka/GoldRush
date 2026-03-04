@@ -58,11 +58,6 @@ static func request_preload() -> void:
 		var path = "res://assets/sprites/gold_mine_animated/without ground/gold_mine%04d.png" % i
 		ResourceLoader.load_threaded_request(path, "Texture2D", false, ResourceLoader.CACHE_MODE_REUSE)
 
-const NPC_IMAGES: Dictionary = {
-	"Big Bob":   "res://assets/sprites/NPC's/BigBob.png",
-	"Sly Sally": "res://assets/sprites/NPC's/SlySally.png",
-	"Mad Max":   "res://assets/sprites/NPC's/MadMAx.png",
-}
 
 var is_hovered: bool = false
 var is_selected: bool = false
@@ -84,8 +79,8 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventMouseButton:
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			# Only click the tile that is currently hovered (frontmost)
-			if _current_hover == self and plot_data.is_biddable():
+			# Allow clicks on AVAILABLE and NPC tiles; PLAYER tiles are already owned
+			if _current_hover == self and plot_data.owner_type != PlotData.OwnerType.PLAYER:
 				clicked.emit(self)
 				get_viewport().set_input_as_handled()
 
@@ -97,8 +92,8 @@ func _process(_delta: float) -> void:
 	if not is_instance_valid(_current_hover):
 		_current_hover = null
 
-	# Non-available tiles don't participate in hover — release and bail out
-	if not plot_data.is_biddable():
+	# Player-owned tiles don't need hover interaction
+	if plot_data.owner_type == PlotData.OwnerType.PLAYER:
 		if _current_hover == self:
 			_current_hover = null
 		if is_hovered:
@@ -388,17 +383,22 @@ func update_visual_state() -> void:
 					name_label.visible = false
 
 		PlotData.OwnerType.NPC:
-			is_hovered = false
 			modulate = Color.WHITE
-			scale = Vector2.ONE
-			terrain_sprite.modulate = Color(0.65, 0.65, 0.65, 1.0)
 			var npc_border_color: Color = Config.NPC_COLORS.get(plot_data.owner_name, UITheme.COLOR_DANGER)
 			border_line.visible = true
-			border_line.width = 2.0
-			border_line.default_color = npc_border_color
 			owner_flag.visible = true
 			owner_flag.modulate = Color.WHITE
 			owner_flag.play("default")
+			if is_hovered or is_selected:
+				scale = Vector2(1.06, 1.06)
+				terrain_sprite.modulate = Color(0.82, 0.78, 0.72, 1.0)
+				border_line.width = 2.5
+				border_line.default_color = npc_border_color.lightened(0.25)
+			else:
+				scale = Vector2.ONE
+				terrain_sprite.modulate = Color(0.65, 0.65, 0.65, 1.0)
+				border_line.width = 2.0
+				border_line.default_color = npc_border_color
 			if name_label:
 				name_label.text = plot_data.plot_name
 				name_label.add_theme_color_override("font_color", Color(0.75, 0.50, 0.50))
@@ -492,7 +492,7 @@ func _setup_npc_pin() -> void:
 ## Shows the NPC pinpoint marker with an animated pop-in
 func show_npc_pin(npc_name: String) -> void:
 	npc_pin_label.text = npc_name
-	var img_path: String = NPC_IMAGES.get(npc_name, "")
+	var img_path: String = Config.NPC_IMAGES.get(npc_name, "")
 	if img_path:
 		var tex := load(img_path) as Texture2D
 		if tex:
