@@ -58,9 +58,9 @@ func _on_round_ended(stats: Dictionary) -> void:
 
 	var goal_reached: bool = stats.gold_collected >= Config.STORAGE_CAPACITY
 
-	header_label.text = "ROUND %d COMPLETE" % GameManager.round_number
+	header_label.text = tr("ROUND_COMPLETE") % GameManager.round_number
 	time_value_label.text = "%.1fs / %.0fs" % [stats.time_used, Config.ROUND_TIME_LIMIT]
-	storage_value_label.text = "Goal Reached! +$%d" % Config.STORAGE_GOAL_BONUS if goal_reached else "Not reached"
+	storage_value_label.text = tr("GOAL_REACHED") % Config.STORAGE_GOAL_BONUS if goal_reached else tr("NOT_REACHED")
 	storage_value_label.add_theme_color_override("font_color",
 		UITheme.COLOR_GOLD_BRIGHT if goal_reached else UITheme.COLOR_TEXT_MUTED)
 	gold_value_label.text = "0"
@@ -68,10 +68,10 @@ func _on_round_ended(stats: Dictionary) -> void:
 	# Set reason label
 	match stats.get("reason", ""):
 		"Player ended":
-			reason_value_label.text = "Ended Early"
+			reason_value_label.text = tr("ENDED_EARLY")
 			reason_value_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_MUTED)
 		_:
-			reason_value_label.text = "Time's Up"
+			reason_value_label.text = tr("TIMES_UP")
 			reason_value_label.add_theme_color_override("font_color", Color(1.0, 0.65, 0.2))
 
 	# Reset animated elements
@@ -170,11 +170,11 @@ func _get_grade_color(grade: String) -> Color:
 
 func _get_grade_desc(grade: String) -> String:
 	match grade:
-		"S": return "Extraordinary!"
-		"A": return "Impressive work"
-		"B": return "Solid effort"
-		"C": return "Could do better"
-		_:   return "Back to the mines..."
+		"S": return tr("GRADE_S")
+		"A": return tr("GRADE_A")
+		"B": return tr("GRADE_B")
+		"C": return tr("GRADE_C")
+		_:   return tr("GRADE_D")
 
 # ============================================================================
 # BUTTON HANDLER

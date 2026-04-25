@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dg5ckvm46txu1"]
 
 [ext_resource type="Script" uid="uid://c5y4rjmfysyi8" path="res://scripts/systems/mining_session.gd" id="1_session"]
+[ext_resource type="Script" uid="uid://dbparl4axbg001" path="res://scripts/background/parallax_bg.gd" id="8_parallaxbg"]
 [ext_resource type="PackedScene" uid="uid://bhpj6r7vy3uxm" path="res://scenes/mining/terrain.tscn" id="2_terrain"]
 [ext_resource type="PackedScene" uid="uid://c8vg2aujnkk6b" path="res://scenes/mining/player.tscn" id="3_player"]
 [ext_resource type="PackedScene" uid="uid://dptwrvk52oqil" path="res://scenes/ui/hud.tscn" id="4_hud"]
@@ -9,6 +10,9 @@
 [ext_resource type="PackedScene" uid="uid://c7d8faf0g1h2i" path="res://scenes/ui/help_dialog.tscn" id="7_help_dialog"]
 
 [node name="MiningScene" type="Node2D" unique_id=1372228299]
+
+[node name="SkyParallax" type="ParallaxBackground" parent="."]
+script = ExtResource("8_parallaxbg")
 
 [node name="MiningSession" type="Node" parent="." unique_id=1904570388 groups=["session_manager"]]
 script = ExtResource("1_session")

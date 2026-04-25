@@ -44,11 +44,31 @@ var indicator_container: Node2D
 var bedrock_tiles: Array[Vector2i] = []
 
 ## Tile IDs (matches tileset configuration)
-## Using atlas coordinates (x, y) for tiles WITH collision shapes
+## Using atlas coordinates (x, y) for tiles WITH collision shapes.
+## Row 24 and 25 both carry full-square physics polygons for cols 0-5.
 const TILE_EMPTY: int = -1
-const TILE_DIRT_ATLAS: Vector2i = Vector2i(0, 24)     # Dirt tile with collision
-const TILE_STONE_ATLAS: Vector2i = Vector2i(1, 24)    # Stone tile with collision
-const TILE_BEDROCK_ATLAS: Vector2i = Vector2i(2, 24)  # Bedrock tile with collision
+const TILE_BEDROCK_ATLAS: Vector2i = Vector2i(2, 24)  # NOT diggable — used for walls/bottom
+
+# Row 24 only — row 25 tiles have a grass top edge and bleed background when used underground.
+# Cols 0-5 in row 24 all have solid full-square physics, so they're safe to mix.
+# Col 2 (BEDROCK) is excluded from diggable zones.
+
+# Dirt-zone variants (depth 0-20%)
+const DIRT_TILES: Array[Vector2i] = [
+	Vector2i(0, 24), Vector2i(3, 24),
+]
+# Stone-zone variants (depth 20-55%)
+const STONE_TILES: Array[Vector2i] = [
+	Vector2i(1, 24), Vector2i(4, 24),
+]
+# Deep-stone variants (depth 55-85%)
+const DEEP_TILES: Array[Vector2i] = [
+	Vector2i(5, 24), Vector2i(4, 24),
+]
+
+# Keep legacy constants so external code still compiles
+const TILE_DIRT_ATLAS: Vector2i = Vector2i(0, 24)
+const TILE_STONE_ATLAS: Vector2i = Vector2i(1, 24)
 
 # ============================================================================
 # GENERATION
@@ -88,33 +108,40 @@ func generate_terrain(seed_value: int, gold_richness: float) -> void:
 
 	print("[Terrain] Generated: Seed=%d, Richness=%.2f, Deposits=%d, Rare=%d, Fossils=%d, Bedrock=%d" % [seed_value, gold_richness, deposit_count, rare_deposits.size(), fossil_decorations.size(), bedrock_tiles.size()])
 
-## Fill TileMap with layered terrain
-## Side columns (x=0, x=terrain_width-1) are always bedrock walls.
+## Surface zone thickness in tile rows.
+## y=0            → DIRT_TILES[0] = top-edge grass tile (border of grass layer)
+## y=1..SURF_FILL → DIRT_TILES[1] = grass fill tile    (middle of surface layer)
+## y>SURF_FILL    → stone/deep/bedrock tiles            (no grass)
+const SURF_FILL_ROWS: int = 3
+
+## Fill TileMap with layered terrain using depth-based tile variety.
+## Only row 24 tiles used — row 25 tiles have transparent edges that bleed
+## the parallax background when placed underground.
 func _generate_terrain_tiles() -> void:
 	for y in range(terrain_height):
 		for x in range(terrain_width):
 			var depth_factor: float = float(y) / terrain_height
 			var tile_atlas: Vector2i
 
-			# Side walls and bottom layer are always bedrock
 			if x == 0 or x == terrain_width - 1:
+				# Side walls: always bedrock
 				tile_atlas = TILE_BEDROCK_ATLAS
-			# Stratified layers based on depth
-			elif depth_factor < 0.2:
-				tile_atlas = TILE_DIRT_ATLAS
+			elif y == 0:
+				# Top surface row: border/edge grass tile
+				tile_atlas = DIRT_TILES[0]
+			elif y <= SURF_FILL_ROWS:
+				# Surface fill rows: interior grass tile (middle of surface zone)
+				tile_atlas = DIRT_TILES[1]
+			elif depth_factor < 0.55:
+				# Underground — NO GRASS tiles from here down
+				tile_atlas = STONE_TILES[randi() % STONE_TILES.size()]
 			elif depth_factor < 0.85:
-				tile_atlas = TILE_STONE_ATLAS
+				tile_atlas = DEEP_TILES[randi() % DEEP_TILES.size()]
 			else:
 				tile_atlas = TILE_BEDROCK_ATLAS
 
-			# Add some noise for variation — only dirt↔stone boundary (never stone→bedrock)
-			if tile_atlas != TILE_BEDROCK_ATLAS and randf() < 0.1:
-				if tile_atlas == TILE_DIRT_ATLAS:
-					tile_atlas = TILE_STONE_ATLAS
-
 			tilemap.set_cell(0, Vector2i(x, y), 0, tile_atlas)
 
-			# Track bedrock positions for visual overlay
 			if tile_atlas == TILE_BEDROCK_ATLAS:
 				bedrock_tiles.append(Vector2i(x, y))
 

@@ -1,35 +1,22 @@
 extends Control
 
-## Settings menu for audio, video, and game options
-## Persists settings to user://settings.cfg
+## Settings menu — thin UI layer over SettingsManager autoload
 
 # ============================================================================
 # NODES
 # ============================================================================
 
-@onready var fullscreen_checkbox: CheckButton = $PanelContainer/VBoxContainer/DisplaySection/FullscreenCheckbox
-@onready var master_slider: HSlider = $PanelContainer/VBoxContainer/AudioSection/MasterVolumeContainer/MasterSlider
-@onready var sfx_slider: HSlider = $PanelContainer/VBoxContainer/AudioSection/SFXVolumeContainer/SFXSlider
-@onready var music_slider: HSlider = $PanelContainer/VBoxContainer/AudioSection/MusicVolumeContainer/MusicSlider
-@onready var master_value_label: Label = $PanelContainer/VBoxContainer/AudioSection/MasterVolumeContainer/ValueLabel
-@onready var sfx_value_label: Label = $PanelContainer/VBoxContainer/AudioSection/SFXVolumeContainer/ValueLabel
-@onready var music_value_label: Label = $PanelContainer/VBoxContainer/AudioSection/MusicVolumeContainer/ValueLabel
-@onready var reset_button: Button = $PanelContainer/VBoxContainer/ButtonContainer/ResetDefaultsButton
-@onready var close_button: Button = $PanelContainer/VBoxContainer/ButtonContainer/CloseButton
-
-# ============================================================================
-# SETTINGS STATE
-# ============================================================================
-
-const SETTINGS_PATH: String = "user://settings.cfg"
-
-var config: ConfigFile = ConfigFile.new()
-
-# Default values
-const DEFAULT_FULLSCREEN: bool = true
-const DEFAULT_MASTER_VOLUME: float = 100.0
-const DEFAULT_SFX_VOLUME: float = 100.0
-const DEFAULT_MUSIC_VOLUME: float = 80.0
+@onready var window_mode_option: OptionButton  = $PanelContainer/VBoxContainer/DisplaySection/WindowModeContainer/WindowModeOptionButton
+@onready var resolution_option: OptionButton   = $PanelContainer/VBoxContainer/DisplaySection/ResolutionContainer/ResolutionOptionButton
+@onready var master_slider: HSlider      = $PanelContainer/VBoxContainer/AudioSection/MasterVolumeContainer/MasterSlider
+@onready var sfx_slider: HSlider         = $PanelContainer/VBoxContainer/AudioSection/SFXVolumeContainer/SFXSlider
+@onready var music_slider: HSlider       = $PanelContainer/VBoxContainer/AudioSection/MusicVolumeContainer/MusicSlider
+@onready var master_value_label: Label   = $PanelContainer/VBoxContainer/AudioSection/MasterVolumeContainer/ValueLabel
+@onready var sfx_value_label: Label      = $PanelContainer/VBoxContainer/AudioSection/SFXVolumeContainer/ValueLabel
+@onready var music_value_label: Label    = $PanelContainer/VBoxContainer/AudioSection/MusicVolumeContainer/ValueLabel
+@onready var language_option: OptionButton = $PanelContainer/VBoxContainer/LanguageSection/LanguageContainer/LanguageOptionButton
+@onready var reset_button: Button  = $PanelContainer/VBoxContainer/ButtonContainer/ResetDefaultsButton
+@onready var close_button: Button  = $PanelContainer/VBoxContainer/ButtonContainer/CloseButton
 
 # ============================================================================
 # INITIALIZATION
@@ -39,17 +26,103 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 	_apply_settings_styles()
+	_populate_window_mode_options()
+	_populate_resolution_options()
+	_populate_language_options()
+	_sync_ui_to_settings()
 
-	# Connect signals
-	fullscreen_checkbox.toggled.connect(_on_fullscreen_toggled)
+	window_mode_option.item_selected.connect(_on_window_mode_selected)
+	resolution_option.item_selected.connect(_on_resolution_selected)
 	master_slider.value_changed.connect(_on_master_volume_changed)
 	sfx_slider.value_changed.connect(_on_sfx_volume_changed)
 	music_slider.value_changed.connect(_on_music_volume_changed)
+	language_option.item_selected.connect(_on_language_selected)
 	reset_button.pressed.connect(_on_reset_defaults_pressed)
 	close_button.pressed.connect(_on_close_pressed)
 
-	# Load and apply settings
-	load_settings()
+func _populate_window_mode_options() -> void:
+	window_mode_option.clear()
+	for label in SettingsManager.WINDOW_MODE_LABELS:
+		window_mode_option.add_item(label)
+
+func _populate_resolution_options() -> void:
+	resolution_option.clear()
+	for label in SettingsManager.RESOLUTION_LABELS:
+		resolution_option.add_item(label)
+
+func _populate_language_options() -> void:
+	language_option.clear()
+	for display_name in LocalizationManager.LOCALE_DISPLAY_NAMES:
+		language_option.add_item(display_name)
+
+## Push current SettingsManager state into widgets (no signals fired)
+func _sync_ui_to_settings() -> void:
+	window_mode_option.selected = SettingsManager.window_mode
+	resolution_option.selected  = SettingsManager.resolution_index
+	resolution_option.disabled  = SettingsManager.window_mode != 0  # Only enabled in Window mode (not fullscreen w/ black bars)
+
+	master_slider.set_value_no_signal(SettingsManager.master_volume)
+	sfx_slider.set_value_no_signal(SettingsManager.sfx_volume)
+	music_slider.set_value_no_signal(SettingsManager.music_volume)
+
+	master_value_label.text = "%d%%" % SettingsManager.master_volume
+	sfx_value_label.text    = "%d%%" % SettingsManager.sfx_volume
+	music_value_label.text  = "%d%%" % SettingsManager.music_volume
+
+	language_option.selected = LocalizationManager.current_locale_index()
+
+# ============================================================================
+# SIGNAL HANDLERS
+# ============================================================================
+
+func _on_window_mode_selected(index: int) -> void:
+	SettingsManager.set_window_mode(index)
+	# Re-sync: switching to Window may have auto-adjusted resolution_index
+	resolution_option.selected = SettingsManager.resolution_index
+	resolution_option.disabled = index != 0  # Resolution only matters in Window mode (not fullscreen w/ black bars)
+
+func _on_resolution_selected(index: int) -> void:
+	SettingsManager.set_resolution(index)
+
+func _on_master_volume_changed(value: float) -> void:
+	master_value_label.text = "%d%%" % value
+	SettingsManager.set_master_volume(value)
+
+func _on_sfx_volume_changed(value: float) -> void:
+	sfx_value_label.text = "%d%%" % value
+	SettingsManager.set_sfx_volume(value)
+
+func _on_music_volume_changed(value: float) -> void:
+	music_value_label.text = "%d%%" % value
+	SettingsManager.set_music_volume(value)
+
+func _on_language_selected(index: int) -> void:
+	var locale := LocalizationManager.SUPPORTED_LOCALES[index]
+	LocalizationManager.set_locale(locale)
+
+func _on_reset_defaults_pressed() -> void:
+	SettingsManager.reset_to_defaults()
+	LocalizationManager.set_locale(SettingsManager.DEFAULT_LANGUAGE)
+	_sync_ui_to_settings()
+
+func _on_close_pressed() -> void:
+	visible = false
+	EventBus.settings_closed.emit()
+
+# ============================================================================
+# INPUT
+# ============================================================================
+
+func _input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		_on_close_pressed()
+
+# ============================================================================
+# STYLES
+# ============================================================================
 
 func _apply_settings_styles() -> void:
 	var panel: PanelContainer = $PanelContainer
@@ -60,166 +133,16 @@ func _apply_settings_styles() -> void:
 		title_label.add_theme_font_override("font", UITheme.font_heading)
 	title_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
 
-	# Section headers
-	var section_label_paths := [
+	for path in [
 		"PanelContainer/VBoxContainer/DisplaySection/SectionLabel",
 		"PanelContainer/VBoxContainer/AudioSection/SectionLabel",
-	]
-	for path in section_label_paths:
+		"PanelContainer/VBoxContainer/LanguageSection/SectionLabel",
+	]:
 		var lbl := get_node_or_null(path)
 		if lbl:
 			if UITheme.font_heading:
 				lbl.add_theme_font_override("font", UITheme.font_heading)
 			lbl.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
 
-	# Fullscreen checkbox
-	fullscreen_checkbox.add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
-	fullscreen_checkbox.add_theme_stylebox_override("normal", UITheme.chip_style())
-	fullscreen_checkbox.add_theme_stylebox_override("pressed", UITheme.chip_style())
-	fullscreen_checkbox.add_theme_stylebox_override("hover", UITheme.chip_style(UITheme.COLOR_SURFACE_LIGHT))
-	fullscreen_checkbox.add_theme_stylebox_override("hover_pressed", UITheme.chip_style(UITheme.COLOR_SURFACE_LIGHT))
-
-	# Buttons
-	close_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
-	reset_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
-
-# ============================================================================
-# SETTINGS PERSISTENCE
-# ============================================================================
-
-func load_settings() -> void:
-	var err = config.load(SETTINGS_PATH)
-
-	if err != OK:
-		print("[Settings] No settings file found, using defaults")
-		apply_defaults()
-		return
-
-	# Load display settings
-	var fullscreen = config.get_value("display", "fullscreen", DEFAULT_FULLSCREEN)
-	fullscreen_checkbox.button_pressed = fullscreen
-	apply_fullscreen(fullscreen)
-
-	# Load audio settings
-	var master_vol = config.get_value("audio", "master_volume", DEFAULT_MASTER_VOLUME)
-	var sfx_vol = config.get_value("audio", "sfx_volume", DEFAULT_SFX_VOLUME)
-	var music_vol = config.get_value("audio", "music_volume", DEFAULT_MUSIC_VOLUME)
-
-	master_slider.value = master_vol
-	sfx_slider.value = sfx_vol
-	music_slider.value = music_vol
-
-	apply_audio_settings(master_vol, sfx_vol, music_vol)
-
-func save_settings() -> void:
-	# Save display settings
-	config.set_value("display", "fullscreen", fullscreen_checkbox.button_pressed)
-
-	# Save audio settings
-	config.set_value("audio", "master_volume", master_slider.value)
-	config.set_value("audio", "sfx_volume", sfx_slider.value)
-	config.set_value("audio", "music_volume", music_slider.value)
-
-	var err = config.save(SETTINGS_PATH)
-	if err != OK:
-		push_error("[Settings] Failed to save settings: %d" % err)
-	else:
-		print("[Settings] Settings saved successfully")
-
-func apply_defaults() -> void:
-	fullscreen_checkbox.button_pressed = DEFAULT_FULLSCREEN
-	master_slider.value = DEFAULT_MASTER_VOLUME
-	sfx_slider.value = DEFAULT_SFX_VOLUME
-	music_slider.value = DEFAULT_MUSIC_VOLUME
-
-	apply_fullscreen(DEFAULT_FULLSCREEN)
-	apply_audio_settings(DEFAULT_MASTER_VOLUME, DEFAULT_SFX_VOLUME, DEFAULT_MUSIC_VOLUME)
-
-# ============================================================================
-# DISPLAY SETTINGS
-# ============================================================================
-
-func _on_fullscreen_toggled(enabled: bool) -> void:
-	apply_fullscreen(enabled)
-	save_settings()
-
-func apply_fullscreen(enabled: bool) -> void:
-	if enabled:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-	else:
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-
-# ============================================================================
-# AUDIO SETTINGS
-# ============================================================================
-
-func _on_master_volume_changed(value: float) -> void:
-	master_value_label.text = "%d%%" % value
-	apply_master_volume(value)
-	save_settings()
-
-func _on_sfx_volume_changed(value: float) -> void:
-	sfx_value_label.text = "%d%%" % value
-	apply_sfx_volume(value)
-	save_settings()
-
-func _on_music_volume_changed(value: float) -> void:
-	music_value_label.text = "%d%%" % value
-	apply_music_volume(value)
-	save_settings()
-
-func apply_audio_settings(master: float, sfx: float, music: float) -> void:
-	apply_master_volume(master)
-	apply_sfx_volume(sfx)
-	apply_music_volume(music)
-
-	# Update labels
-	master_value_label.text = "%d%%" % master
-	sfx_value_label.text = "%d%%" % sfx
-	music_value_label.text = "%d%%" % music
-
-func apply_master_volume(value: float) -> void:
-	# Convert 0-100 to dB (-80 to 0)
-	var db = linear_to_db(value / 100.0)
-	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), db)
-
-func apply_sfx_volume(value: float) -> void:
-	var db = linear_to_db(value / 100.0)
-	var bus_index = AudioServer.get_bus_index("SFX")
-	if bus_index != -1:
-		AudioServer.set_bus_volume_db(bus_index, db)
-
-func apply_music_volume(value: float) -> void:
-	var db = linear_to_db(value / 100.0)
-	var bus_index = AudioServer.get_bus_index("Music")
-	if bus_index != -1:
-		AudioServer.set_bus_volume_db(bus_index, db)
-
-func linear_to_db(linear: float) -> float:
-	if linear <= 0.0:
-		return -80.0  # Effective mute
-	return 20.0 * log(linear) / log(10.0)
-
-# ============================================================================
-# BUTTON HANDLERS
-# ============================================================================
-
-func _on_reset_defaults_pressed() -> void:
-	apply_defaults()
-	save_settings()
-
-func _on_close_pressed() -> void:
-	visible = false
-	EventBus.settings_closed.emit()
-
-# ============================================================================
-# INPUT HANDLING
-# ============================================================================
-
-func _input(event: InputEvent) -> void:
-	if not visible:
-		return
-
-	if event.is_action_pressed("ui_cancel"):
-		get_viewport().set_input_as_handled()
-		_on_close_pressed()
+	close_button.add_theme_stylebox_override("normal",  UITheme.action_button_style())
+	reset_button.add_theme_stylebox_override("normal",  UITheme.action_button_style())

@@ -17,6 +17,7 @@ signal auction_won(plot_data: Resource)
 
 ## Emitted when mining phase starts
 ## @param plot_data: The won plot's data
+@warning_ignore("unused_signal")
 signal mining_started(plot_data: Resource)
 
 ## Emitted when a terrain tile is successfully dug
@@ -92,19 +93,25 @@ signal debug_reveal_gold()
 # ============================================================================
 
 ## Emitted when game is paused (ESC during mining)
+@warning_ignore("unused_signal")
 signal game_paused()
 
 ## Emitted when game is resumed from pause
+@warning_ignore("unused_signal")
 signal game_resumed()
 
 ## Emitted when help dialog is opened
+@warning_ignore("unused_signal")
 signal help_opened()
 
 ## Emitted when help dialog is closed
+@warning_ignore("unused_signal")
 signal help_closed()
 
 ## Emitted when settings menu is opened
+@warning_ignore("unused_signal")
 signal settings_opened()
 
 ## Emitted when settings menu is closed
+@warning_ignore("unused_signal")
 signal settings_closed()

@@ -29,9 +29,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -400.0
-offset_top = -250.0
+offset_top = -330.0
 offset_right = 400.0
-offset_bottom = 250.0
+offset_bottom = 330.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -56,10 +56,29 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Display"
 
-[node name="FullscreenCheckbox" type="CheckButton" parent="PanelContainer/VBoxContainer/DisplaySection"]
+[node name="WindowModeContainer" type="HBoxContainer" parent="PanelContainer/VBoxContainer/DisplaySection"]
 layout_mode = 2
-button_pressed = true
-text = "Fullscreen"
+
+[node name="Label" type="Label" parent="PanelContainer/VBoxContainer/DisplaySection/WindowModeContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Window Mode"
+
+[node name="WindowModeOptionButton" type="OptionButton" parent="PanelContainer/VBoxContainer/DisplaySection/WindowModeContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ResolutionContainer" type="HBoxContainer" parent="PanelContainer/VBoxContainer/DisplaySection"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="PanelContainer/VBoxContainer/DisplaySection/ResolutionContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Resolution"
+
+[node name="ResolutionOptionButton" type="OptionButton" parent="PanelContainer/VBoxContainer/DisplaySection/ResolutionContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="HSeparator2" type="HSeparator" parent="PanelContainer/VBoxContainer"]
 layout_mode = 2
@@ -136,6 +155,24 @@ text = "80%"
 horizontal_alignment = 2
 
 [node name="HSeparator3" type="HSeparator" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="LanguageSection" type="VBoxContainer" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SectionLabel" type="Label" parent="PanelContainer/VBoxContainer/LanguageSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Language"
+
+[node name="LanguageContainer" type="HBoxContainer" parent="PanelContainer/VBoxContainer/LanguageSection"]
+layout_mode = 2
+
+[node name="LanguageOptionButton" type="OptionButton" parent="PanelContainer/VBoxContainer/LanguageSection/LanguageContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HSeparator4" type="HSeparator" parent="PanelContainer/VBoxContainer"]
 layout_mode = 2
 
 [node name="ButtonContainer" type="HBoxContainer" parent="PanelContainer/VBoxContainer"]

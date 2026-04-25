@@ -1,0 +1,683 @@
+extends Node
+
+## LocalizationManager — registers all game translations with TranslationServer
+##
+## All supported locales are defined here as GDScript dictionaries.
+## Loaded AFTER SettingsManager so the saved locale can be read immediately.
+
+# ============================================================================
+# CONSTANTS
+# ============================================================================
+
+const SUPPORTED_LOCALES: Array[String] = ["en", "pt_BR", "es", "zh_CN", "ja", "ko"]
+const LOCALE_DISPLAY_NAMES: Array[String] = [
+	"English", "Português (BR)", "Español", "中文 (简体)", "日本語", "한국어"
+]
+const DEFAULT_LOCALE: String = "en"
+
+# ============================================================================
+# LIFECYCLE
+# ============================================================================
+
+func _ready() -> void:
+	_register_all_translations()
+	var saved_locale: String = SettingsManager.language
+	if saved_locale not in SUPPORTED_LOCALES:
+		saved_locale = DEFAULT_LOCALE
+	TranslationServer.set_locale(saved_locale)
+
+# ============================================================================
+# PUBLIC API
+# ============================================================================
+
+## Change the active locale and persist the choice via SettingsManager
+func set_locale(locale: String) -> void:
+	if locale not in SUPPORTED_LOCALES:
+		locale = DEFAULT_LOCALE
+	TranslationServer.set_locale(locale)
+	SettingsManager.set_language(locale)
+
+## Return the display name for a locale code (always in native language)
+func get_display_name(locale: String) -> String:
+	var idx := SUPPORTED_LOCALES.find(locale)
+	return LOCALE_DISPLAY_NAMES[idx] if idx != -1 else locale
+
+## Index of the current locale in SUPPORTED_LOCALES
+func current_locale_index() -> int:
+	var idx := SUPPORTED_LOCALES.find(TranslationServer.get_locale())
+	return max(idx, 0)
+
+# ============================================================================
+# REGISTRATION
+# ============================================================================
+
+func _register_all_translations() -> void:
+	for locale in SUPPORTED_LOCALES:
+		var messages := _get_messages(locale)
+		var translation := Translation.new()
+		translation.locale = locale
+		for key: String in messages.keys():
+			translation.add_message(key, messages[key])
+		TranslationServer.add_translation(translation)
+
+func _get_messages(locale: String) -> Dictionary:
+	match locale:
+		"en":    return _messages_en()
+		"pt_BR": return _messages_pt_BR()
+		"es":    return _messages_es()
+		"zh_CN": return _messages_zh_CN()
+		"ja":    return _messages_ja()
+		"ko":    return _messages_ko()
+	return {}
+
+# ============================================================================
+# ENGLISH
+# ============================================================================
+
+func _messages_en() -> Dictionary:
+	return {
+		# ── Settings UI ───────────────────────────────────────────────────────
+		"Settings": "Settings",
+		"Display": "Display",
+		"Fullscreen": "Fullscreen",
+		"Resolution": "Resolution",
+		"Audio": "Audio",
+		"Master Volume": "Master Volume",
+		"SFX Volume": "SFX Volume",
+		"Music Volume": "Music Volume",
+		"Reset Defaults": "Reset Defaults",
+		"Close": "Close",
+		"Language": "Language",
+		# ── Main Menu ─────────────────────────────────────────────────────────
+		"Land Auction & Mining": "Land Auction & Mining",
+		"NEW GAME": "NEW GAME",
+		"SETTINGS": "SETTINGS",
+		"QUIT": "QUIT",
+		# ── Pause Menu ────────────────────────────────────────────────────────
+		"PAUSED": "PAUSED",
+		"Resume [ESC]": "Resume [ESC]",
+		"Help [H]": "Help [H]",
+		"Quit to Menu": "Quit to Menu",
+		# ── Help Dialog ───────────────────────────────────────────────────────
+		"Keyboard Shortcuts": "Keyboard Shortcuts",
+		"Movement": "Movement",
+		"Mining": "Mining",
+		"User Interface": "User Interface",
+		"Debug (Dev Build)": "Debug (Dev Build)",
+		"Close [ESC]": "Close [ESC]",
+		"Move Up": "Move Up",
+		"Move Left": "Move Left",
+		"Move Down": "Move Down",
+		"Move Right": "Move Right",
+		"Drill Tile": "Drill Tile",
+		"Scan for Gold": "Scan for Gold",
+		"Pause Game": "Pause Game",
+		"Toggle Help": "Toggle Help",
+		"Add $1000": "Add $1000",
+		"Reveal All Gold": "Reveal All Gold",
+		"Toggle Debug Overlay": "Toggle Debug Overlay",
+		# ── HUD ───────────────────────────────────────────────────────────────
+		"ROUND_LABEL": "Round: %d",
+		"SCAN_READY": "SCAN [E]",
+		"SCAN_COOLDOWN": "SCAN (%.1fs)",
+		"END EARLY": "END EARLY",
+		"SCAN_TOOLTIP": "Detect nearby gold (Press E)\nCooldown: 3 seconds",
+		"GOLD_TOOLTIP": "Gold collected this round\nFill to %d for a $%d bonus!",
+		"END_EARLY_TOOLTIP": "End mining early and go to results",
+		# ── Auction ───────────────────────────────────────────────────────────
+		"AUCTION_TITLE": "Land Auction — Round %d",
+		"PLOT_DETAILS": "PLOT DETAILS",
+		"COMPETITORS": "COMPETITORS",
+		"NO_PLOT_SELECTED": "No Plot Selected",
+		"CLICK_TO_VIEW": "Click an available tile on the\nmap to view details and bid.",
+		"SELECT_PLOT": "Select a Plot",
+		"STARTING_BID": "Starting Bid:  $%d",
+		"CLAIMED_BY": "Claimed by %s",
+		"CHALLENGE_NPC": "Challenge %s! ⚔",
+		"YOU_OWN_PLOT": "✓ You own this plot",
+		"ACQUIRED": "Acquired",
+		"RIVALS_CHOOSING": "Rivals are still choosing...",
+		"WAIT_FOR_RIVALS": "Wait for Rivals",
+		"AVAILABLE_BID": "Available for bidding",
+		"PLACE_BID": "Place Bid  →",
+		"INSUFFICIENT_FUNDS": "Insufficient Funds",
+		"INSUFFICIENT_FUNDS_MSG": "Insufficient funds!",
+		"PLOT_ACQUIRED_MSG": "Plot acquired for $%d! Rivals are now choosing...",
+		"YOUR_TURN_SELECT": "Your turn!  Select an available plot.",
+		"NPC_CLAIMED_MSG": "%s claimed %s",
+		"NPC_EYEING_MSG": "%s is eyeing %s...",
+		"WON_DUEL": "You won the duel! Heading to the mines...",
+		"LOST_DUEL": "You lost the duel. %s keeps their claim.",
+		"WAITING": "Waiting...",
+		"ANALYZING_MARKET": "Analyzing market...",
+		"DONE_FOR_NOW": "Done for now",
+		"EYEING_PLOT": "Eyeing \"%s\"...",
+		"CLAIMED_PLOT": "✓  Claimed %s",
+		# ── Round End ─────────────────────────────────────────────────────────
+		"ROUND_COMPLETE": "ROUND %d COMPLETE",
+		"Gold Collected": "Gold Collected",
+		"Storage Goal": "Storage Goal",
+		"Time Used": "Time Used",
+		"Ended by": "Ended by",
+		"Efficiency Grade": "Efficiency Grade",
+		"CONTINUE TO AUCTION": "CONTINUE TO AUCTION",
+		"GOAL_REACHED": "Goal Reached! +$%d",
+		"NOT_REACHED": "Not reached",
+		"ENDED_EARLY": "Ended Early",
+		"TIMES_UP": "Time's Up",
+		"GRADE_S": "Extraordinary!",
+		"GRADE_A": "Impressive work",
+		"GRADE_B": "Solid effort",
+		"GRADE_C": "Could do better",
+		"GRADE_D": "Back to the mines...",
+	}
+
+# ============================================================================
+# PORTUGUESE (BR)
+# ============================================================================
+
+func _messages_pt_BR() -> Dictionary:
+	return {
+		# ── Settings UI ───────────────────────────────────────────────────────
+		"Settings": "Configurações",
+		"Display": "Vídeo",
+		"Fullscreen": "Tela Cheia",
+		"Resolution": "Resolução",
+		"Audio": "Áudio",
+		"Master Volume": "Volume Geral",
+		"SFX Volume": "Volume de SFX",
+		"Music Volume": "Volume de Música",
+		"Reset Defaults": "Padrões",
+		"Close": "Fechar",
+		"Language": "Idioma",
+		# ── Main Menu ─────────────────────────────────────────────────────────
+		"Land Auction & Mining": "Leilão de Terras & Mineração",
+		"NEW GAME": "NOVO JOGO",
+		"SETTINGS": "CONFIGURAÇÕES",
+		"QUIT": "SAIR",
+		# ── Pause Menu ────────────────────────────────────────────────────────
+		"PAUSED": "PAUSADO",
+		"Resume [ESC]": "Continuar [ESC]",
+		"Help [H]": "Ajuda [H]",
+		"Quit to Menu": "Ir ao Menu",
+		# ── Help Dialog ───────────────────────────────────────────────────────
+		"Keyboard Shortcuts": "Atalhos de Teclado",
+		"Movement": "Movimento",
+		"Mining": "Mineração",
+		"User Interface": "Interface",
+		"Debug (Dev Build)": "Debug (Dev)",
+		"Close [ESC]": "Fechar [ESC]",
+		"Move Up": "Mover para Cima",
+		"Move Left": "Mover para Esquerda",
+		"Move Down": "Mover para Baixo",
+		"Move Right": "Mover para Direita",
+		"Drill Tile": "Perfurar Bloco",
+		"Scan for Gold": "Detectar Ouro",
+		"Pause Game": "Pausar Jogo",
+		"Toggle Help": "Mostrar/Ocultar Ajuda",
+		"Add $1000": "Adicionar $1000",
+		"Reveal All Gold": "Revelar Todo Ouro",
+		"Toggle Debug Overlay": "Exibir Debug",
+		# ── HUD ───────────────────────────────────────────────────────────────
+		"ROUND_LABEL": "Rodada: %d",
+		"SCAN_READY": "SCAN [E]",
+		"SCAN_COOLDOWN": "SCAN (%.1fs)",
+		"END EARLY": "ENCERRAR",
+		"SCAN_TOOLTIP": "Detectar ouro próximo (Pressione E)\nTempo de espera: 3 segundos",
+		"GOLD_TOOLTIP": "Ouro coletado nesta rodada\nComplete até %d para bônus de $%d!",
+		"END_EARLY_TOOLTIP": "Encerrar mineração e ver resultados",
+		# ── Auction ───────────────────────────────────────────────────────────
+		"AUCTION_TITLE": "Leilão de Terras — Rodada %d",
+		"PLOT_DETAILS": "DETALHES",
+		"COMPETITORS": "RIVAIS",
+		"NO_PLOT_SELECTED": "Nenhum Selecionado",
+		"CLICK_TO_VIEW": "Clique em um terreno disponível\nno mapa para ver detalhes.",
+		"SELECT_PLOT": "Selecionar Terreno",
+		"STARTING_BID": "Lance inicial:  $%d",
+		"CLAIMED_BY": "Reivindicado por %s",
+		"CHALLENGE_NPC": "Desafiar %s! ⚔",
+		"YOU_OWN_PLOT": "✓ Seu terreno",
+		"ACQUIRED": "Adquirido",
+		"RIVALS_CHOOSING": "Rivais ainda escolhendo...",
+		"WAIT_FOR_RIVALS": "Aguardar Rivais",
+		"AVAILABLE_BID": "Disponível para lance",
+		"PLACE_BID": "Fazer Lance  →",
+		"INSUFFICIENT_FUNDS": "Fundos Insuficientes",
+		"INSUFFICIENT_FUNDS_MSG": "Fundos insuficientes!",
+		"PLOT_ACQUIRED_MSG": "Terreno adquirido por $%d! Rivais escolhendo...",
+		"YOUR_TURN_SELECT": "Sua vez!  Escolha um terreno disponível.",
+		"NPC_CLAIMED_MSG": "%s conquistou %s",
+		"NPC_EYEING_MSG": "%s está mirando %s...",
+		"WON_DUEL": "Você venceu o duelo! Indo para a mina...",
+		"LOST_DUEL": "Você perdeu o duelo. %s mantém o terreno.",
+		"WAITING": "Aguardando...",
+		"ANALYZING_MARKET": "Analisando mercado...",
+		"DONE_FOR_NOW": "Por enquanto",
+		"EYEING_PLOT": "Visando \"%s\"...",
+		"CLAIMED_PLOT": "✓  Conquistou %s",
+		# ── Round End ─────────────────────────────────────────────────────────
+		"ROUND_COMPLETE": "RODADA %d COMPLETA",
+		"Gold Collected": "Ouro Coletado",
+		"Storage Goal": "Meta de Armazém",
+		"Time Used": "Tempo Gasto",
+		"Ended by": "Encerrado por",
+		"Efficiency Grade": "Nota de Eficiência",
+		"CONTINUE TO AUCTION": "IR PARA LEILÃO",
+		"GOAL_REACHED": "Meta Atingida! +$%d",
+		"NOT_REACHED": "Não atingida",
+		"ENDED_EARLY": "Encerrado Cedo",
+		"TIMES_UP": "Tempo Esgotado",
+		"GRADE_S": "Extraordinário!",
+		"GRADE_A": "Trabalho Impressionante",
+		"GRADE_B": "Bom Esforço",
+		"GRADE_C": "Pode Melhorar",
+		"GRADE_D": "De volta às minas...",
+	}
+
+# ============================================================================
+# SPANISH
+# ============================================================================
+
+func _messages_es() -> Dictionary:
+	return {
+		# ── Settings UI ───────────────────────────────────────────────────────
+		"Settings": "Configuración",
+		"Display": "Pantalla",
+		"Fullscreen": "Pantalla Completa",
+		"Resolution": "Resolución",
+		"Audio": "Audio",
+		"Master Volume": "Volumen Principal",
+		"SFX Volume": "Volumen de Efectos",
+		"Music Volume": "Volumen de Música",
+		"Reset Defaults": "Restablecer",
+		"Close": "Cerrar",
+		"Language": "Idioma",
+		# ── Main Menu ─────────────────────────────────────────────────────────
+		"Land Auction & Mining": "Subasta & Minería",
+		"NEW GAME": "NUEVO JUEGO",
+		"SETTINGS": "CONFIGURACIÓN",
+		"QUIT": "SALIR",
+		# ── Pause Menu ────────────────────────────────────────────────────────
+		"PAUSED": "PAUSADO",
+		"Resume [ESC]": "Reanudar [ESC]",
+		"Help [H]": "Ayuda [H]",
+		"Quit to Menu": "Volver al Menú",
+		# ── Help Dialog ───────────────────────────────────────────────────────
+		"Keyboard Shortcuts": "Atajos de Teclado",
+		"Movement": "Movimiento",
+		"Mining": "Minería",
+		"User Interface": "Interfaz de Usuario",
+		"Debug (Dev Build)": "Debug (Dev)",
+		"Close [ESC]": "Cerrar [ESC]",
+		"Move Up": "Mover Arriba",
+		"Move Left": "Mover Izquierda",
+		"Move Down": "Mover Abajo",
+		"Move Right": "Mover Derecha",
+		"Drill Tile": "Perforar Bloque",
+		"Scan for Gold": "Detectar Oro",
+		"Pause Game": "Pausar Juego",
+		"Toggle Help": "Mostrar/Ocultar Ayuda",
+		"Add $1000": "Agregar $1000",
+		"Reveal All Gold": "Revelar Todo Oro",
+		"Toggle Debug Overlay": "Mostrar Debug",
+		# ── HUD ───────────────────────────────────────────────────────────────
+		"ROUND_LABEL": "Ronda: %d",
+		"SCAN_READY": "SCAN [E]",
+		"SCAN_COOLDOWN": "SCAN (%.1fs)",
+		"END EARLY": "TERMINAR",
+		"SCAN_TOOLTIP": "Detectar oro cercano (Presiona E)\nEnfriamiento: 3 segundos",
+		"GOLD_TOOLTIP": "Oro recolectado en esta ronda\n¡Llena hasta %d para un bono de $%d!",
+		"END_EARLY_TOOLTIP": "Terminar minería y ver resultados",
+		# ── Auction ───────────────────────────────────────────────────────────
+		"AUCTION_TITLE": "Subasta — Ronda %d",
+		"PLOT_DETAILS": "DETALLES",
+		"COMPETITORS": "RIVALES",
+		"NO_PLOT_SELECTED": "Sin Selección",
+		"CLICK_TO_VIEW": "Haz clic en un terreno disponible\nen el mapa para ver detalles.",
+		"SELECT_PLOT": "Seleccionar Terreno",
+		"STARTING_BID": "Puja inicial:  $%d",
+		"CLAIMED_BY": "Reclamado por %s",
+		"CHALLENGE_NPC": "¡Desafiar %s! ⚔",
+		"YOU_OWN_PLOT": "✓ Tu terreno",
+		"ACQUIRED": "Adquirido",
+		"RIVALS_CHOOSING": "Rivales aún eligiendo...",
+		"WAIT_FOR_RIVALS": "Esperar Rivales",
+		"AVAILABLE_BID": "Disponible para pujar",
+		"PLACE_BID": "Pujar  →",
+		"INSUFFICIENT_FUNDS": "Fondos Insuficientes",
+		"INSUFFICIENT_FUNDS_MSG": "¡Fondos insuficientes!",
+		"PLOT_ACQUIRED_MSG": "¡Terreno adquirido por $%d! Rivales eligiendo...",
+		"YOUR_TURN_SELECT": "¡Tu turno!  Selecciona un terreno disponible.",
+		"NPC_CLAIMED_MSG": "%s reclamó %s",
+		"NPC_EYEING_MSG": "%s está mirando %s...",
+		"WON_DUEL": "¡Ganaste el duelo! Yendo a la mina...",
+		"LOST_DUEL": "Perdiste el duelo. %s conserva su terreno.",
+		"WAITING": "Esperando...",
+		"ANALYZING_MARKET": "Analizando mercado...",
+		"DONE_FOR_NOW": "Por ahora",
+		"EYEING_PLOT": "Mirando \"%s\"...",
+		"CLAIMED_PLOT": "✓  Reclamó %s",
+		# ── Round End ─────────────────────────────────────────────────────────
+		"ROUND_COMPLETE": "RONDA %d COMPLETA",
+		"Gold Collected": "Oro Recolectado",
+		"Storage Goal": "Meta de Almacén",
+		"Time Used": "Tiempo Usado",
+		"Ended by": "Terminado por",
+		"Efficiency Grade": "Calificación",
+		"CONTINUE TO AUCTION": "IR A SUBASTA",
+		"GOAL_REACHED": "¡Meta Alcanzada! +$%d",
+		"NOT_REACHED": "No alcanzada",
+		"ENDED_EARLY": "Terminado Antes",
+		"TIMES_UP": "Tiempo Agotado",
+		"GRADE_S": "¡Extraordinario!",
+		"GRADE_A": "Trabajo Impresionante",
+		"GRADE_B": "Buen Esfuerzo",
+		"GRADE_C": "Podría Mejorar",
+		"GRADE_D": "De vuelta a las minas...",
+	}
+
+# ============================================================================
+# SIMPLIFIED CHINESE
+# ============================================================================
+
+func _messages_zh_CN() -> Dictionary:
+	return {
+		# ── Settings UI ───────────────────────────────────────────────────────
+		"Settings": "设置",
+		"Display": "显示",
+		"Fullscreen": "全屏",
+		"Resolution": "分辨率",
+		"Audio": "音频",
+		"Master Volume": "主音量",
+		"SFX Volume": "效果音量",
+		"Music Volume": "音乐音量",
+		"Reset Defaults": "重置默认",
+		"Close": "关闭",
+		"Language": "语言",
+		# ── Main Menu ─────────────────────────────────────────────────────────
+		"Land Auction & Mining": "土地拍卖与采矿",
+		"NEW GAME": "新游戏",
+		"SETTINGS": "设置",
+		"QUIT": "退出",
+		# ── Pause Menu ────────────────────────────────────────────────────────
+		"PAUSED": "已暂停",
+		"Resume [ESC]": "继续 [ESC]",
+		"Help [H]": "帮助 [H]",
+		"Quit to Menu": "返回主菜单",
+		# ── Help Dialog ───────────────────────────────────────────────────────
+		"Keyboard Shortcuts": "键盘快捷键",
+		"Movement": "移动",
+		"Mining": "采矿",
+		"User Interface": "用户界面",
+		"Debug (Dev Build)": "调试 (开发版)",
+		"Close [ESC]": "关闭 [ESC]",
+		"Move Up": "向上移动",
+		"Move Left": "向左移动",
+		"Move Down": "向下移动",
+		"Move Right": "向右移动",
+		"Drill Tile": "钻探方块",
+		"Scan for Gold": "探测黄金",
+		"Pause Game": "暂停游戏",
+		"Toggle Help": "切换帮助",
+		"Add $1000": "添加 $1000",
+		"Reveal All Gold": "显示所有黄金",
+		"Toggle Debug Overlay": "切换调试叠加",
+		# ── HUD ───────────────────────────────────────────────────────────────
+		"ROUND_LABEL": "回合: %d",
+		"SCAN_READY": "扫描 [E]",
+		"SCAN_COOLDOWN": "扫描 (%.1fs)",
+		"END EARLY": "提前结束",
+		"SCAN_TOOLTIP": "探测附近黄金 (按 E)\n冷却: 3 秒",
+		"GOLD_TOOLTIP": "本回合收集的黄金\n达到 %d 可获得 $%d 奖励！",
+		"END_EARLY_TOOLTIP": "提前结束采矿并查看结果",
+		# ── Auction ───────────────────────────────────────────────────────────
+		"AUCTION_TITLE": "土地拍卖 — 第 %d 回合",
+		"PLOT_DETAILS": "地块详情",
+		"COMPETITORS": "竞争者",
+		"NO_PLOT_SELECTED": "未选择地块",
+		"CLICK_TO_VIEW": "在地图上点击可用地块\n查看详情并出价。",
+		"SELECT_PLOT": "选择地块",
+		"STARTING_BID": "起始出价: $%d",
+		"CLAIMED_BY": "%s 已认领",
+		"CHALLENGE_NPC": "挑战 %s! ⚔",
+		"YOU_OWN_PLOT": "✓ 你拥有此地块",
+		"ACQUIRED": "已获得",
+		"RIVALS_CHOOSING": "对手仍在选择...",
+		"WAIT_FOR_RIVALS": "等待对手",
+		"AVAILABLE_BID": "可以出价",
+		"PLACE_BID": "出价  →",
+		"INSUFFICIENT_FUNDS": "资金不足",
+		"INSUFFICIENT_FUNDS_MSG": "资金不足！",
+		"PLOT_ACQUIRED_MSG": "以 $%d 获得地块！对手正在选择...",
+		"YOUR_TURN_SELECT": "轮到你了！选择一个可用地块。",
+		"NPC_CLAIMED_MSG": "%s 认领了 %s",
+		"NPC_EYEING_MSG": "%s 正在观察 %s...",
+		"WON_DUEL": "你赢得了决斗！前往矿山...",
+		"LOST_DUEL": "你输掉了决斗。%s 保留了认领权。",
+		"WAITING": "等待中...",
+		"ANALYZING_MARKET": "分析市场...",
+		"DONE_FOR_NOW": "暂时完成",
+		"EYEING_PLOT": "关注 \"%s\"...",
+		"CLAIMED_PLOT": "✓  已认领 %s",
+		# ── Round End ─────────────────────────────────────────────────────────
+		"ROUND_COMPLETE": "第 %d 回合完成",
+		"Gold Collected": "收集黄金",
+		"Storage Goal": "储存目标",
+		"Time Used": "使用时间",
+		"Ended by": "结束原因",
+		"Efficiency Grade": "效率评级",
+		"CONTINUE TO AUCTION": "前往拍卖",
+		"GOAL_REACHED": "目标达成！+$%d",
+		"NOT_REACHED": "未达成",
+		"ENDED_EARLY": "提前结束",
+		"TIMES_UP": "时间到",
+		"GRADE_S": "非凡！",
+		"GRADE_A": "令人印象深刻",
+		"GRADE_B": "不错的努力",
+		"GRADE_C": "有待改进",
+		"GRADE_D": "回到矿山...",
+	}
+
+# ============================================================================
+# JAPANESE
+# ============================================================================
+
+func _messages_ja() -> Dictionary:
+	return {
+		# ── Settings UI ───────────────────────────────────────────────────────
+		"Settings": "設定",
+		"Display": "表示",
+		"Fullscreen": "フルスクリーン",
+		"Resolution": "解像度",
+		"Audio": "オーディオ",
+		"Master Volume": "マスター音量",
+		"SFX Volume": "効果音量",
+		"Music Volume": "音楽音量",
+		"Reset Defaults": "デフォルトに戻す",
+		"Close": "閉じる",
+		"Language": "言語",
+		# ── Main Menu ─────────────────────────────────────────────────────────
+		"Land Auction & Mining": "土地オークション＆採掘",
+		"NEW GAME": "新しいゲーム",
+		"SETTINGS": "設定",
+		"QUIT": "終了",
+		# ── Pause Menu ────────────────────────────────────────────────────────
+		"PAUSED": "一時停止",
+		"Resume [ESC]": "再開 [ESC]",
+		"Help [H]": "ヘルプ [H]",
+		"Quit to Menu": "メインメニューへ",
+		# ── Help Dialog ───────────────────────────────────────────────────────
+		"Keyboard Shortcuts": "キーボードショートカット",
+		"Movement": "移動",
+		"Mining": "採掘",
+		"User Interface": "ユーザーインターフェース",
+		"Debug (Dev Build)": "デバッグ (開発版)",
+		"Close [ESC]": "閉じる [ESC]",
+		"Move Up": "上移動",
+		"Move Left": "左移動",
+		"Move Down": "下移動",
+		"Move Right": "右移動",
+		"Drill Tile": "ブロック掘削",
+		"Scan for Gold": "金を探知",
+		"Pause Game": "ゲームを一時停止",
+		"Toggle Help": "ヘルプの切替",
+		"Add $1000": "$1000追加",
+		"Reveal All Gold": "すべての金を表示",
+		"Toggle Debug Overlay": "デバッグオーバーレイ切替",
+		# ── HUD ───────────────────────────────────────────────────────────────
+		"ROUND_LABEL": "ラウンド: %d",
+		"SCAN_READY": "スキャン [E]",
+		"SCAN_COOLDOWN": "スキャン (%.1fs)",
+		"END EARLY": "早期終了",
+		"SCAN_TOOLTIP": "近くの金を探知 (E キー)\nクールダウン: 3秒",
+		"GOLD_TOOLTIP": "このラウンドで収集した金\n%d 達成で $%d ボーナス！",
+		"END_EARLY_TOOLTIP": "採掘を早期終了して結果を確認",
+		# ── Auction ───────────────────────────────────────────────────────────
+		"AUCTION_TITLE": "土地オークション — ラウンド %d",
+		"PLOT_DETAILS": "区画詳細",
+		"COMPETITORS": "ライバル",
+		"NO_PLOT_SELECTED": "区画未選択",
+		"CLICK_TO_VIEW": "マップの空きスポットをクリックして\n詳細を確認してください。",
+		"SELECT_PLOT": "区画を選択",
+		"STARTING_BID": "開始入札: $%d",
+		"CLAIMED_BY": "%s が入手済み",
+		"CHALLENGE_NPC": "%s に挑戦! ⚔",
+		"YOU_OWN_PLOT": "✓ あなたの区画",
+		"ACQUIRED": "取得済み",
+		"RIVALS_CHOOSING": "ライバルが選んでいます...",
+		"WAIT_FOR_RIVALS": "ライバルを待機",
+		"AVAILABLE_BID": "入札可能",
+		"PLACE_BID": "入札する  →",
+		"INSUFFICIENT_FUNDS": "資金不足",
+		"INSUFFICIENT_FUNDS_MSG": "資金不足！",
+		"PLOT_ACQUIRED_MSG": "$%d で区画を取得！ライバルが選択中...",
+		"YOUR_TURN_SELECT": "あなたの番です！空き区画を選択してください。",
+		"NPC_CLAIMED_MSG": "%s が %s を入手",
+		"NPC_EYEING_MSG": "%s が %s を狙っています...",
+		"WON_DUEL": "決闘に勝利！鉱山へ向かいます...",
+		"LOST_DUEL": "決闘に負けました。%s が区画を保持。",
+		"WAITING": "待機中...",
+		"ANALYZING_MARKET": "市場分析中...",
+		"DONE_FOR_NOW": "今は終了",
+		"EYEING_PLOT": "\"%s\" を狙っています...",
+		"CLAIMED_PLOT": "✓  %s を取得",
+		# ── Round End ─────────────────────────────────────────────────────────
+		"ROUND_COMPLETE": "ラウンド %d 完了",
+		"Gold Collected": "収集した金",
+		"Storage Goal": "保管目標",
+		"Time Used": "使用時間",
+		"Ended by": "終了理由",
+		"Efficiency Grade": "効率グレード",
+		"CONTINUE TO AUCTION": "オークションへ",
+		"GOAL_REACHED": "目標達成！+$%d",
+		"NOT_REACHED": "未達成",
+		"ENDED_EARLY": "早期終了",
+		"TIMES_UP": "時間切れ",
+		"GRADE_S": "素晴らしい！",
+		"GRADE_A": "印象的な仕事",
+		"GRADE_B": "着実な努力",
+		"GRADE_C": "改善の余地あり",
+		"GRADE_D": "鉱山に戻れ...",
+	}
+
+# ============================================================================
+# KOREAN
+# ============================================================================
+
+func _messages_ko() -> Dictionary:
+	return {
+		# ── Settings UI ───────────────────────────────────────────────────────
+		"Settings": "설정",
+		"Display": "디스플레이",
+		"Fullscreen": "전체 화면",
+		"Resolution": "해상도",
+		"Audio": "오디오",
+		"Master Volume": "마스터 볼륨",
+		"SFX Volume": "효과음 볼륨",
+		"Music Volume": "음악 볼륨",
+		"Reset Defaults": "기본값 초기화",
+		"Close": "닫기",
+		"Language": "언어",
+		# ── Main Menu ─────────────────────────────────────────────────────────
+		"Land Auction & Mining": "토지 경매 및 채굴",
+		"NEW GAME": "새 게임",
+		"SETTINGS": "설정",
+		"QUIT": "종료",
+		# ── Pause Menu ────────────────────────────────────────────────────────
+		"PAUSED": "일시정지",
+		"Resume [ESC]": "재개 [ESC]",
+		"Help [H]": "도움말 [H]",
+		"Quit to Menu": "메인 메뉴로",
+		# ── Help Dialog ───────────────────────────────────────────────────────
+		"Keyboard Shortcuts": "키보드 단축키",
+		"Movement": "이동",
+		"Mining": "채굴",
+		"User Interface": "사용자 인터페이스",
+		"Debug (Dev Build)": "디버그 (개발 빌드)",
+		"Close [ESC]": "닫기 [ESC]",
+		"Move Up": "위로 이동",
+		"Move Left": "왼쪽으로 이동",
+		"Move Down": "아래로 이동",
+		"Move Right": "오른쪽으로 이동",
+		"Drill Tile": "블록 드릴",
+		"Scan for Gold": "금 탐지",
+		"Pause Game": "게임 일시정지",
+		"Toggle Help": "도움말 토글",
+		"Add $1000": "$1000 추가",
+		"Reveal All Gold": "모든 금 표시",
+		"Toggle Debug Overlay": "디버그 오버레이 토글",
+		# ── HUD ───────────────────────────────────────────────────────────────
+		"ROUND_LABEL": "라운드: %d",
+		"SCAN_READY": "스캔 [E]",
+		"SCAN_COOLDOWN": "스캔 (%.1fs)",
+		"END EARLY": "조기 종료",
+		"SCAN_TOOLTIP": "근처 금 탐지 (E 키)\n쿨다운: 3초",
+		"GOLD_TOOLTIP": "이번 라운드에서 수집한 금\n%d 채우면 $%d 보너스!",
+		"END_EARLY_TOOLTIP": "채굴을 조기 종료하고 결과 보기",
+		# ── Auction ───────────────────────────────────────────────────────────
+		"AUCTION_TITLE": "토지 경매 — 라운드 %d",
+		"PLOT_DETAILS": "구역 정보",
+		"COMPETITORS": "경쟁자",
+		"NO_PLOT_SELECTED": "구역 미선택",
+		"CLICK_TO_VIEW": "지도에서 가용 구역을 클릭해\n상세 정보를 확인하고 입찰하세요.",
+		"SELECT_PLOT": "구역 선택",
+		"STARTING_BID": "시작 입찰: $%d",
+		"CLAIMED_BY": "%s 소유",
+		"CHALLENGE_NPC": "%s 도전! ⚔",
+		"YOU_OWN_PLOT": "✓ 내 구역",
+		"ACQUIRED": "획득함",
+		"RIVALS_CHOOSING": "경쟁자들이 선택 중...",
+		"WAIT_FOR_RIVALS": "경쟁자 대기",
+		"AVAILABLE_BID": "입찰 가능",
+		"PLACE_BID": "입찰하기  →",
+		"INSUFFICIENT_FUNDS": "자금 부족",
+		"INSUFFICIENT_FUNDS_MSG": "자금이 부족합니다!",
+		"PLOT_ACQUIRED_MSG": "$%d 에 구역 획득! 경쟁자들이 선택 중...",
+		"YOUR_TURN_SELECT": "당신 차례입니다! 가용 구역을 선택하세요.",
+		"NPC_CLAIMED_MSG": "%s 가 %s 획득",
+		"NPC_EYEING_MSG": "%s 가 %s 를 노리고 있습니다...",
+		"WON_DUEL": "결투 승리! 광산으로 향합니다...",
+		"LOST_DUEL": "결투에서 졌습니다. %s 가 구역을 유지합니다.",
+		"WAITING": "대기 중...",
+		"ANALYZING_MARKET": "시장 분석 중...",
+		"DONE_FOR_NOW": "일단 완료",
+		"EYEING_PLOT": "\"%s\" 를 주시 중...",
+		"CLAIMED_PLOT": "✓  %s 획득",
+		# ── Round End ─────────────────────────────────────────────────────────
+		"ROUND_COMPLETE": "라운드 %d 완료",
+		"Gold Collected": "수집한 금",
+		"Storage Goal": "보관 목표",
+		"Time Used": "사용 시간",
+		"Ended by": "종료 사유",
+		"Efficiency Grade": "효율 등급",
+		"CONTINUE TO AUCTION": "경매로 이동",
+		"GOAL_REACHED": "목표 달성! +$%d",
+		"NOT_REACHED": "미달성",
+		"ENDED_EARLY": "조기 종료",
+		"TIMES_UP": "시간 초과",
+		"GRADE_S": "탁월함!",
+		"GRADE_A": "인상적인 성과",
+		"GRADE_B": "탄탄한 노력",
+		"GRADE_C": "더 잘할 수 있어요",
+		"GRADE_D": "광산으로 돌아가...",
+	}

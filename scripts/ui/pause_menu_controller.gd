@@ -133,6 +133,7 @@ func _on_settings_pressed() -> void:
 		add_child(settings_menu)
 
 	settings_menu.visible = true
+	EventBus.settings_opened.emit()
 
 func _on_quit_pressed() -> void:
 	# Unpause before scene change

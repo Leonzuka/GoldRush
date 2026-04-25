@@ -70,9 +70,9 @@ func _apply_styles() -> void:
 
 ## Setup tooltips for UI elements
 func _setup_tooltips() -> void:
-	scan_button.tooltip_text = "Detect nearby gold (Press E)\nCooldown: 3 seconds"
-	storage_bar.tooltip_text = "Gold collected this round\nFill to %d for a $%d bonus!" % [Config.STORAGE_CAPACITY, Config.STORAGE_GOAL_BONUS]
-	end_button.tooltip_text = "End mining early and go to results"
+	scan_button.tooltip_text = tr("SCAN_TOOLTIP")
+	storage_bar.tooltip_text = tr("GOLD_TOOLTIP") % [Config.STORAGE_CAPACITY, Config.STORAGE_GOAL_BONUS]
+	end_button.tooltip_text  = tr("END_EARLY_TOOLTIP")
 
 ## Create FPS counter label programmatically
 func _create_fps_counter() -> void:
@@ -92,7 +92,7 @@ func _create_fps_counter() -> void:
 # ============================================================================
 
 func update_round_display() -> void:
-	round_label.text = "Round: %d" % GameManager.round_number
+	round_label.text = tr("ROUND_LABEL") % GameManager.round_number
 
 func update_money_display() -> void:
 	displayed_money = GameManager.player_money
@@ -143,9 +143,9 @@ func _process(delta: float) -> void:
 	if _scanner_cooldown > 0.0:
 		_scanner_cooldown = maxf(_scanner_cooldown - delta, 0.0)
 		if _scanner_cooldown > 0.0:
-			scan_button.text = "SCAN (%.1fs)" % _scanner_cooldown
+			scan_button.text = tr("SCAN_COOLDOWN") % _scanner_cooldown
 		else:
-			scan_button.text = "SCAN [E]"
+			scan_button.text = tr("SCAN_READY")
 			scan_button.disabled = false
 
 # ============================================================================
@@ -156,10 +156,23 @@ func _on_scanner_cooldown_changed(remaining: float) -> void:
 	_scanner_cooldown = remaining
 	if remaining > 0.0:
 		scan_button.disabled = true
-		scan_button.text = "SCAN (%.1fs)" % remaining
+		scan_button.text = tr("SCAN_COOLDOWN") % remaining
 	else:
 		scan_button.disabled = false
-		scan_button.text = "SCAN [E]"
+		scan_button.text = tr("SCAN_READY")
+
+# ============================================================================
+# TRANSLATION
+# ============================================================================
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		if not round_label:
+			return
+		update_round_display()
+		_setup_tooltips()
+		if _scanner_cooldown <= 0.0:
+			scan_button.text = tr("SCAN_READY")
 
 # ============================================================================
 # MONEY ANIMATION  — DO NOT MODIFY

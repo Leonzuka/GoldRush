@@ -1,12 +1,11 @@
 # GoldRush - TODO List
 
 ## 🔴 Tarefas Imediatas
-- [ ] Settings persistentes (volume, resolucao, fullscreen)
 ### Visual
+- Deixar o Menu Inicial mais estilizado com Ouro e Engrenagens
 - [ ] Parallax background na cena de mineracao (ceu, nuvens)
 - Emprestimo para deixar o jogo mais dinâmico
-- Sistema de contratos (objetivos opcionais com recompensas: "ache 5 depositos em 30s")
-Quan
+- Sistema de contratos (objetivos opcionais com recompensas: "ache 5 depositos em 30s" recompensa maior acesso a crédito ou +ouro na conta)
 
 ### Gameplay Core & Balanceamento
 - [ ] Validar balanceamento de dificuldade dos plots
@@ -19,7 +18,6 @@ Quan
 - [ ] Criar classe `MarketSystem` (autoload) com preco base do ouro
 - Add dois compradores de oures em cada borda do mapa eles terão
 - [ ] Implementar algoritmo para variacao de precos entre rounds
-- [ ] Criar HUD de preco do ouro no menu principal e tela de leilao
 - [ ] Criar grafico de flutuacao de precos (historico dos ultimos N rounds)
 
 ### Compradores
@@ -28,10 +26,7 @@ Quan
 
 ### Eventos de Mercado
 - [ ] Criar eventos que afetam o mercado (descobertas, escassez, inflacao)
-- [ ] Notificacao visual quando evento de mercado ocorre
-- [ ] Sistema de probabilidade de eventos baseado no round atual
-
----
+- [ ] Notificacao visual quando os preços mudam
 
 ## 🟢 Phase 3: Sistema de Upgrades
 
@@ -52,18 +47,15 @@ Quan
 - [ ] Salvar upgrades comprados entre sessoes (save/load)
 - [ ] Mostrar upgrades ativos no HUD durante mineracao
 
----
-
 ## 🔵 Phase 4: Polish e Refinamento
 
 ### Audio
 - [ ] Sons de escavacao (dirt vs stone vs bedrock, variacoes)
-- [ ] Som de coleta de ouro (coin pickup satisfatorio)
 - [ ] Musica de fundo (menu) - loop ambiente
 - [ ] Musica de fundo (leilao) - tensao crescente
 - [ ] Musica de fundo (mineracao) - ritmo exploratorio
 - [ ] Sons de interface (cliques, transicoes, hover)
-- [ ] Som de "storage full" warning
+- [ ] Som de "bag full" warning
 
 ### UX
 - [ ] Tutorial interativo no primeiro round (highlight areas, setas guia)
@@ -79,14 +71,11 @@ Quan
 
 ### Modos de Jogo
 - [ ] Modo historia com narrativa (cutscenes simples entre rounds)
-- [ ] Modo desafio (objetivos especificos: "colete 300 ouro em 60s")
 
 ## 💡 Nice to Have (Baixa Prioridade)
 
 - [ ] Sistema de conquistas/achievements
-- [ ] Placar global (leaderboard)
 - [ ] Steam Workshop integration
-- [ ] Localizacao (PT-BR, EN, ES)
 - [ ] Controller support (gamepad mapping)
 - [ ] Mobile port (touch controls)
 
@@ -94,3 +83,4 @@ Quan
 - Customizacao visual do personagem (chapeus, picaretas, roupas)
 - Ferramentas especiais (dinamite abre 3x3, aspirador de ouro coleta a distancia)
 - Sistema de fadiga do player (precisa descansar apos X segundos)
+- Texto cortando na parte de baixo no modo tela cheia.

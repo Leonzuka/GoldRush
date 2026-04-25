@@ -154,8 +154,8 @@ func chip_style(bg: Color = COLOR_BG_SURFACE) -> StyleBoxFlat:
 	s.set_corner_radius_all(4)
 	s.content_margin_left = 8
 	s.content_margin_right = 8
-	s.content_margin_top = 4
-	s.content_margin_bottom = 4
+	s.content_margin_top = 6
+	s.content_margin_bottom = 8
 	return s
 
 ## Primary action button style

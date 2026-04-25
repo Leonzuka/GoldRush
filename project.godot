@@ -36,6 +36,8 @@ buses/2/send="Master"
 
 [autoload]
 
+SettingsManager="*res://scripts/autoload/settings_manager.gd"
+LocalizationManager="*res://scripts/autoload/localization_manager.gd"
 SceneTransition="*res://scripts/autoload/scene_transition.gd"
 UITheme="*res://scripts/autoload/ui_theme_manager.gd"
 GameManager="*res://scripts/autoload/game_manager.gd"
