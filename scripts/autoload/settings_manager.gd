@@ -195,6 +195,9 @@ func _apply_defaults_silent() -> void:
 	_apply_all()
 
 func _apply_window_mode(mode_index: int) -> void:
+	# Mobile platforms manage their own window — let the OS decide
+	if OS.has_feature("mobile"):
+		return
 	var ds_mode: int = WINDOW_MODE_DS[clampi(mode_index, 0, WINDOW_MODE_DS.size() - 1)]
 	DisplayServer.window_set_mode(ds_mode)
 	if mode_index == 3:
@@ -214,6 +217,8 @@ func _apply_window_mode(mode_index: int) -> void:
 			_apply_resolution(resolution_index)
 
 func _apply_resolution(index: int) -> void:
+	if OS.has_feature("mobile"):
+		return
 	var res: Vector2i = RESOLUTIONS[clampi(index, 0, RESOLUTIONS.size() - 1)]
 	DisplayServer.window_set_size(res)
 	# Center on primary monitor, but keep title bar on-screen (y >= 30)

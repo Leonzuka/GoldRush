@@ -34,6 +34,7 @@ var fps_label: Label
 # NPC roster sidebar (created in code, left edge)
 var npc_roster: PanelContainer
 var npc_entries: Dictionary = {}  # name → {container, avatar, status_lbl, claimed}
+var _player_budget_lbl: Label = null
 
 ## MinigameRPS script pre-loaded for challenge flow
 const MinigameRPSScript = preload("res://scripts/ui/minigame_rps_controller.gd")
@@ -320,6 +321,8 @@ func _on_bid_button_pressed() -> void:
 
 func _on_money_changed(new_amount: int) -> void:
 	_animate_money_change(new_amount)
+	if _player_budget_lbl:
+		_player_budget_lbl.text = "$ %d" % new_amount
 
 ## Animate money counter with counting effect and color flash
 func _animate_money_change(new_amount: int) -> void:
@@ -423,6 +426,23 @@ func _create_npc_roster() -> void:
 	vbox.add_theme_constant_override("separation", 16)
 	npc_roster.add_child(vbox)
 
+	# ---- PLAYER ENTRY (top) ----
+	var you_header = Label.new()
+	you_header.text = tr("YOU")
+	you_header.add_theme_font_size_override("font_size", 11)
+	you_header.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
+	you_header.custom_minimum_size = Vector2(0, 18)
+	if UITheme.font_heading:
+		you_header.add_theme_font_override("font", UITheme.font_heading)
+	vbox.add_child(you_header)
+
+	vbox.add_child(_create_player_card())
+
+	var sep_top = HSeparator.new()
+	sep_top.add_theme_color_override("color", Color(UITheme.COLOR_GOLD_PRIMARY, 0.4))
+	sep_top.add_theme_constant_override("separation", 8)
+	vbox.add_child(sep_top)
+
 	# Section header
 	var header = Label.new()
 	header.text = tr("COMPETITORS")
@@ -446,6 +466,100 @@ func _create_npc_roster() -> void:
 		vbox.add_child(npc_entries[npc_name]["container"])
 
 	$UILayer.add_child(npc_roster)
+
+## Builds the circular avatar Control with a given texture and color, horizontally flipped
+func _build_avatar(tex: Texture2D, color: Color) -> Control:
+	var avatar_style = StyleBoxFlat.new()
+	avatar_style.bg_color = Color(color.r * 0.25, color.g * 0.25, color.b * 0.25, 1.0)
+	avatar_style.set_corner_radius_all(24)
+	avatar_style.set_border_width_all(2)
+	avatar_style.border_color = Color(color.r, color.g, color.b, 0.8)
+
+	var avatar_bg = Panel.new()
+	avatar_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	avatar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	avatar_bg.add_theme_stylebox_override("panel", avatar_style)
+
+	var avatar = Control.new()
+	avatar.custom_minimum_size = Vector2(48, 48)
+	avatar.add_child(avatar_bg)
+	# Store style as metadata so callers can animate the border color
+	avatar.set_meta("bg_style", avatar_style)
+
+	if tex:
+		var avatar_tex := TextureRect.new()
+		avatar_tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		avatar_tex.texture = tex
+		avatar_tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		avatar_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		avatar_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Circle clip + horizontal flip (sprite faces right, sidebar faces left)
+		var shader := Shader.new()
+		shader.code = "shader_type canvas_item;\nvoid fragment() {\n\tvec2 uv = UV - vec2(0.5);\n\tif (length(uv) > 0.5) { discard; }\n\tCOLOR = texture(TEXTURE, vec2(1.0 - UV.x, UV.y));\n}"
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		avatar_tex.material = mat
+		avatar.add_child(avatar_tex)
+	else:
+		var initial_lbl := Label.new()
+		initial_lbl.text = "?"
+		initial_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		initial_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		initial_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		initial_lbl.add_theme_font_size_override("font_size", 22)
+		initial_lbl.add_theme_color_override("font_color", color.lightened(0.4))
+		initial_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		avatar.add_child(initial_lbl)
+
+	return avatar
+
+## Builds the player card shown at the top of the roster
+func _create_player_card() -> PanelContainer:
+	var color := Color(1.0, 0.85, 0.2)
+
+	var container = PanelContainer.new()
+	var entry_style = StyleBoxFlat.new()
+	entry_style.bg_color = Color(color.r * 0.12, color.g * 0.12, color.b * 0.08, 0.9)
+	entry_style.set_corner_radius_all(8)
+	entry_style.border_width_left = 3
+	entry_style.border_color = Color(color.r, color.g, color.b, 0.7)
+	entry_style.content_margin_left = 10
+	entry_style.content_margin_right = 10
+	entry_style.content_margin_top = 10
+	entry_style.content_margin_bottom = 14
+	container.add_theme_stylebox_override("panel", entry_style)
+	container.clip_contents = false
+
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	container.add_child(hbox)
+
+	var tex: Texture2D = load("res://assets/sprites/Prota/Prota.png") as Texture2D
+	hbox.add_child(_build_avatar(tex, color))
+
+	var info_col = VBoxContainer.new()
+	info_col.add_theme_constant_override("separation", 3)
+	info_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(info_col)
+
+	var name_lbl = Label.new()
+	name_lbl.text = tr("PLAYER_YOU")
+	name_lbl.add_theme_font_size_override("font_size", 13)
+	name_lbl.add_theme_color_override("font_color", color.lightened(0.3))
+	if UITheme.font_heading:
+		name_lbl.add_theme_font_override("font", UITheme.font_heading)
+	info_col.add_child(name_lbl)
+
+	var budget_lbl = Label.new()
+	budget_lbl.text = "$ %d" % GameManager.player_money
+	budget_lbl.add_theme_font_size_override("font_size", 11)
+	budget_lbl.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
+	budget_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	budget_lbl.custom_minimum_size = Vector2(120, 22)
+	info_col.add_child(budget_lbl)
+	_player_budget_lbl = budget_lbl
+
+	return container
 
 ## Creates a single NPC entry row for the roster
 func _create_npc_entry(npc_name: String) -> Dictionary:
@@ -472,40 +586,13 @@ func _create_npc_entry(npc_name: String) -> Dictionary:
 	hbox.add_theme_constant_override("separation", 10)
 	container.add_child(hbox)
 
-	# Avatar — circular portrait with NPC image (48×48)
-	var avatar_style = StyleBoxFlat.new()
-	avatar_style.bg_color = Color(color.r * 0.25, color.g * 0.25, color.b * 0.25, 1.0)
-	avatar_style.set_corner_radius_all(24)
-	avatar_style.set_border_width_all(2)
-	avatar_style.border_color = Color(color.r, color.g, color.b, 0.8)
-
-	var avatar_bg = Panel.new()
-	avatar_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	avatar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	avatar_bg.add_theme_stylebox_override("panel", avatar_style)
-
-	var avatar = Control.new()
-	avatar.custom_minimum_size = Vector2(48, 48)
-	avatar.add_child(avatar_bg)
-
+	# Avatar — circular portrait, flipped to face the map (same direction as NPCs look)
 	var img_path: String = Config.NPC_IMAGES.get(npc_name, "")
 	var tex: Texture2D = load(img_path) as Texture2D if not img_path.is_empty() else null
-	if tex:
-		var avatar_tex := TextureRect.new()
-		avatar_tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		avatar_tex.texture = tex
-		avatar_tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		avatar_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		avatar_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Shader clips the square image to a circle
-		var shader := Shader.new()
-		shader.code = "shader_type canvas_item;\nvoid fragment() {\n\tvec2 uv = UV - vec2(0.5);\n\tif (length(uv) > 0.5) { discard; }\n\tCOLOR = texture(TEXTURE, UV);\n}"
-		var mat := ShaderMaterial.new()
-		mat.shader = shader
-		avatar_tex.material = mat
-		avatar.add_child(avatar_tex)
-	else:
-		# Procedural fallback: initial letter centered in the circle
+	var avatar := _build_avatar(tex, color)
+
+	# Fallback initial letter when no image
+	if not tex:
 		var initial_lbl := Label.new()
 		initial_lbl.text = npc_name[0].to_upper() if npc_name.length() > 0 else "?"
 		initial_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -540,12 +627,11 @@ func _create_npc_entry(npc_name: String) -> Dictionary:
 	status_lbl.custom_minimum_size = Vector2(120, 22)
 	info_col.add_child(status_lbl)
 
-	# Store entry for later updates
+	# Store entry for later updates (avatar_style accessed via avatar.get_meta("bg_style"))
 	npc_entries[npc_name] = {
 		"container": container,
 		"entry_style": entry_style,
 		"avatar": avatar,
-		"avatar_style": avatar_style,
 		"status_lbl": status_lbl,
 		"color": color,
 	}
@@ -562,12 +648,15 @@ func _set_npc_status(npc_name: String, status_text: String, active: bool, claime
 	entry["status_lbl"].text = status_text
 	var color: Color = entry["color"]
 
+	var avatar_style: StyleBoxFlat = entry["avatar"].get_meta("bg_style") as StyleBoxFlat
+
 	if active:
 		# Bright highlight when actively considering
 		entry["status_lbl"].add_theme_color_override("font_color", UITheme.COLOR_GOLD_BRIGHT)
 		entry["entry_style"].bg_color = Color(color.r * 0.22, color.g * 0.22, color.b * 0.22, 1.0)
 		entry["entry_style"].border_color = Color(color.r, color.g, color.b, 1.0)
-		entry["avatar_style"].border_color = UITheme.COLOR_GOLD_BRIGHT
+		if avatar_style:
+			avatar_style.border_color = UITheme.COLOR_GOLD_BRIGHT
 		# Pulse tween on avatar
 		var tween = entry["container"].create_tween().set_loops(4)
 		tween.tween_property(entry["avatar"], "modulate", Color(1.3, 1.2, 1.0), 0.3).set_ease(Tween.EASE_IN_OUT)
@@ -577,13 +666,15 @@ func _set_npc_status(npc_name: String, status_text: String, active: bool, claime
 		entry["status_lbl"].add_theme_color_override("font_color", Color(0.50, 0.75, 0.50))
 		entry["entry_style"].bg_color = Color(color.r * 0.10, color.g * 0.10, color.b * 0.10, 0.7)
 		entry["entry_style"].border_color = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, 0.4)
-		entry["avatar_style"].border_color = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, 0.6)
+		if avatar_style:
+			avatar_style.border_color = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, 0.6)
 		entry["avatar"].modulate = Color(0.7, 0.7, 0.7)
 	else:
 		entry["status_lbl"].add_theme_color_override("font_color", Color(0.55, 0.50, 0.42))
 		entry["entry_style"].bg_color = Color(color.r * 0.12, color.g * 0.12, color.b * 0.12, 0.8)
 		entry["entry_style"].border_color = Color(color.r, color.g, color.b, 0.5)
-		entry["avatar_style"].border_color = Color(color.r, color.g, color.b, 0.8)
+		if avatar_style:
+			avatar_style.border_color = Color(color.r, color.g, color.b, 0.8)
 		entry["avatar"].modulate = Color.WHITE
 
 ## Sets all NPCs to the same status text (idle/reset)

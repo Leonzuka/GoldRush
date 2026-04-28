@@ -16,7 +16,7 @@ var is_collected: bool = false
 # ============================================================================
 
 ## Target display size in pixels for the Gold.png sprite
-const DISPLAY_PX: float = 12.0
+const DISPLAY_PX: float = 22.0
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -77,5 +77,5 @@ func collect() -> void:
 
 func _draw() -> void:
 	# Soft golden glow behind the nugget
-	draw_circle(Vector2.ZERO, 10.0, Color(1.0, 0.85, 0.2, 0.3))
-	draw_circle(Vector2.ZERO, 6.0, Color(1.0, 0.9, 0.4, 0.4))
+	draw_circle(Vector2.ZERO, 18.0, Color(1.0, 0.85, 0.2, 0.3))
+	draw_circle(Vector2.ZERO, 11.0, Color(1.0, 0.9, 0.4, 0.4))

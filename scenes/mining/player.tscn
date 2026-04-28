@@ -1,33 +1,34 @@
-[gd_scene load_steps=6 format=3 uid="uid://c8vg2aujnkk6b"]
+[gd_scene format=3 uid="uid://c8vg2aujnkk6b"]
 
-[ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1_player"]
-[ext_resource type="Script" path="res://scripts/player/drill_component.gd" id="2_drill"]
-[ext_resource type="Script" path="res://scripts/player/scanner_component.gd" id="3_scanner"]
-[ext_resource type="Texture2D" uid="uid://ct8jom8i30cpn" path="res://assets/sprites/Prota.png" id="4_prota"]
+[ext_resource type="Script" uid="uid://ryv867alu1a3" path="res://scripts/player/player_controller.gd" id="1_player"]
+[ext_resource type="Script" uid="uid://cadyin6y7ura" path="res://scripts/player/drill_component.gd" id="2_drill"]
+[ext_resource type="Script" uid="uid://b35fpr8w2cn8l" path="res://scripts/player/scanner_component.gd" id="3_scanner"]
+[ext_resource type="Texture2D" uid="uid://dprotarun9x91" path="res://assets/sprites/Prota/spritesheet-table-9x9-Running_Backgroundrecorted.png" id="4_run"]
 
 [sub_resource type="CapsuleShape2D" id="RectangleShape2D_1"]
-radius = 7.0
-height = 30.0
+radius = 14.0
+height = 40.0
 
-[node name="Player" type="CharacterBody2D" groups=["player"]]
+[node name="Player" type="CharacterBody2D" unique_id=671219349 groups=["player"]]
 collision_layer = 2
 collision_mask = 5
 script = ExtResource("1_player")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(0, -10)
-texture = ExtResource("4_prota")
-scale = Vector2(0.07, 0.07)
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1948666563]
+position = Vector2(0, -24)
+scale = Vector2(0.14097221, 0.14097221)
+texture = ExtResource("4_run")
+hframes = 9
+vframes = 9
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1258828789]
+position = Vector2(0, 6)
 shape = SubResource("RectangleShape2D_1")
 
-[node name="DrillComponent" type="Node" parent="."]
+[node name="DrillComponent" type="Node" parent="." unique_id=844516812]
 script = ExtResource("2_drill")
 
-[node name="ScannerComponent" type="Node" parent="." groups=["scanner"]]
+[node name="ScannerComponent" type="Node" parent="." unique_id=487008210 groups=["scanner"]]
 script = ExtResource("3_scanner")
 
-[node name="Camera2D" type="Camera2D" parent="."]
-zoom = Vector2(2, 2)
-enabled = true
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1867619018]

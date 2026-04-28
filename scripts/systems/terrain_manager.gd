@@ -43,32 +43,45 @@ var indicator_container: Node2D
 ## Bedrock tile positions tracked for visual overlay
 var bedrock_tiles: Array[Vector2i] = []
 
-## Tile IDs (matches tileset configuration)
-## Using atlas coordinates (x, y) for tiles WITH collision shapes.
-## Row 24 and 25 both carry full-square physics polygons for cols 0-5.
+## Tile IDs (TX Tileset Ground.png — 16x16 px per tile)
+## Coord convention: row=letter (A=0, B=1, ...), col=number (1=0, 2=1, ...)
+## Atlas Vector2i is (col, row).
+## Layer 1 (surface, grass): A1=left edge, A2=fill, A3=right edge
+## Layer 2+ (mid earth): B2 fill, with F12/G13/H12 as occasional variants
+## Deep layers: I7 or K12 (rock)
+## Bedrock: same rock tile as deep, differentiated via overlay in _draw()
 const TILE_EMPTY: int = -1
-const TILE_BEDROCK_ATLAS: Vector2i = Vector2i(2, 24)  # NOT diggable — used for walls/bottom
 
-# Row 24 only — row 25 tiles have a grass top edge and bleed background when used underground.
-# Cols 0-5 in row 24 all have solid full-square physics, so they're safe to mix.
-# Col 2 (BEDROCK) is excluded from diggable zones.
+# Surface row tiles (with grass on top)
+const TILE_SURFACE_LEFT: Vector2i  = Vector2i(0, 0)   # A1
+const TILE_SURFACE_FILL: Vector2i  = Vector2i(1, 0)   # A2
+const TILE_SURFACE_RIGHT: Vector2i = Vector2i(2, 0)   # A3
 
-# Dirt-zone variants (depth 0-20%)
-const DIRT_TILES: Array[Vector2i] = [
-	Vector2i(0, 24), Vector2i(3, 24),
+# Mid-earth fill (used from second row down through shallow/mid depths)
+const TILE_EARTH_FILL: Vector2i = Vector2i(1, 1)      # B2
+
+# Occasional decorative variants for mid layers
+const EARTH_VARIANTS: Array[Vector2i] = [
+	Vector2i(11, 5),   # F12
+	Vector2i(12, 6),   # G13
+	Vector2i(11, 7),   # H12
 ]
-# Stone-zone variants (depth 20-55%)
-const STONE_TILES: Array[Vector2i] = [
-	Vector2i(1, 24), Vector2i(4, 24),
-]
-# Deep-stone variants (depth 55-85%)
+
+# Deep-rock variants
 const DEEP_TILES: Array[Vector2i] = [
-	Vector2i(5, 24), Vector2i(4, 24),
+	Vector2i(6, 8),    # I7
+	Vector2i(11, 10),  # K12
 ]
+
+# Bedrock uses same rock atlas as deep — visually differentiated via _draw() overlay
+const TILE_BEDROCK_ATLAS: Vector2i = Vector2i(11, 10)  # K12
+
+# Probability that a mid-earth tile is replaced with a decorative variant
+const EARTH_VARIANT_CHANCE: float = 0.08
 
 # Keep legacy constants so external code still compiles
-const TILE_DIRT_ATLAS: Vector2i = Vector2i(0, 24)
-const TILE_STONE_ATLAS: Vector2i = Vector2i(1, 24)
+const TILE_DIRT_ATLAS: Vector2i = TILE_SURFACE_FILL
+const TILE_STONE_ATLAS: Vector2i = TILE_EARTH_FILL
 
 # ============================================================================
 # GENERATION
@@ -108,42 +121,53 @@ func generate_terrain(seed_value: int, gold_richness: float) -> void:
 
 	print("[Terrain] Generated: Seed=%d, Richness=%.2f, Deposits=%d, Rare=%d, Fossils=%d, Bedrock=%d" % [seed_value, gold_richness, deposit_count, rare_deposits.size(), fossil_decorations.size(), bedrock_tiles.size()])
 
-## Surface zone thickness in tile rows.
-## y=0            → DIRT_TILES[0] = top-edge grass tile (border of grass layer)
-## y=1..SURF_FILL → DIRT_TILES[1] = grass fill tile    (middle of surface layer)
-## y>SURF_FILL    → stone/deep/bedrock tiles            (no grass)
-const SURF_FILL_ROWS: int = 3
-
 ## Fill TileMap with layered terrain using depth-based tile variety.
-## Only row 24 tiles used — row 25 tiles have transparent edges that bleed
-## the parallax background when placed underground.
+## Layout:
+##   y=0                                   → A1/A2/A3 (grass surface, edges + fill)
+##   y in [1, mid_end)                     → B2 with rare F12/G13/H12 variants
+##   y in [mid_end, deep_end)              → I7 / K12 (deep rock)
+##   y >= deep_end OR borders / bottom row → bedrock (rock with overlay)
 func _generate_terrain_tiles() -> void:
+	bedrock_tiles.clear()
+	var mid_end: int = int(terrain_height * 0.55)
+	var deep_end: int = int(terrain_height * 0.85)
+
 	for y in range(terrain_height):
 		for x in range(terrain_width):
-			var depth_factor: float = float(y) / terrain_height
+			var pos := Vector2i(x, y)
 			var tile_atlas: Vector2i
+			var is_bedrock := false
 
-			if x == 0 or x == terrain_width - 1:
-				# Side walls: always bedrock
+			if x == 0 or x == terrain_width - 1 or y == terrain_height - 1:
+				# Borders + bottom row: bedrock (uses deep rock tile + overlay)
 				tile_atlas = TILE_BEDROCK_ATLAS
+				is_bedrock = true
 			elif y == 0:
-				# Top surface row: border/edge grass tile
-				tile_atlas = DIRT_TILES[0]
-			elif y <= SURF_FILL_ROWS:
-				# Surface fill rows: interior grass tile (middle of surface zone)
-				tile_atlas = DIRT_TILES[1]
-			elif depth_factor < 0.55:
-				# Underground — NO GRASS tiles from here down
-				tile_atlas = STONE_TILES[randi() % STONE_TILES.size()]
-			elif depth_factor < 0.85:
+				# Surface row with proper edge tiles
+				if x == 1:
+					tile_atlas = TILE_SURFACE_LEFT
+				elif x == terrain_width - 2:
+					tile_atlas = TILE_SURFACE_RIGHT
+				else:
+					tile_atlas = TILE_SURFACE_FILL
+			elif y < mid_end:
+				# Mid earth: B2 fill with occasional decorative variants
+				if randf() < EARTH_VARIANT_CHANCE:
+					tile_atlas = EARTH_VARIANTS[randi() % EARTH_VARIANTS.size()]
+				else:
+					tile_atlas = TILE_EARTH_FILL
+			elif y < deep_end:
+				# Deep rock layer
 				tile_atlas = DEEP_TILES[randi() % DEEP_TILES.size()]
 			else:
+				# Deepest layer = bedrock
 				tile_atlas = TILE_BEDROCK_ATLAS
+				is_bedrock = true
 
-			tilemap.set_cell(0, Vector2i(x, y), 0, tile_atlas)
+			tilemap.set_cell(0, pos, 0, tile_atlas)
 
-			if tile_atlas == TILE_BEDROCK_ATLAS:
-				bedrock_tiles.append(Vector2i(x, y))
+			if is_bedrock:
+				bedrock_tiles.append(pos)
 
 ## Generate clustered gold deposits
 func _generate_gold_deposits(count: int) -> void:
@@ -220,8 +244,7 @@ func _generate_fossil_decorations() -> void:
 				if gold_deposits.has(tile) or rare_deposits.has(tile) or fossil_decorations.has(tile):
 					valid = false
 					break
-				var atlas: Vector2i = tilemap.get_cell_atlas_coords(0, tile)
-				if atlas == TILE_BEDROCK_ATLAS or tilemap.get_cell_source_id(0, tile) == TILE_EMPTY:
+				if bedrock_tiles.has(tile) or tilemap.get_cell_source_id(0, tile) == TILE_EMPTY:
 					valid = false
 					break
 			if not valid:
@@ -253,8 +276,7 @@ func _place_rare_deposit(type: String, min_depth: int, value_min: int, value_max
 		# Skip if occupied by gold, another rare, or not a diggable tile
 		if gold_deposits.has(pos) or rare_deposits.has(pos):
 			continue
-		var tile_atlas: Vector2i = tilemap.get_cell_atlas_coords(0, pos)
-		if tile_atlas == TILE_BEDROCK_ATLAS:
+		if bedrock_tiles.has(pos):
 			continue
 		if tilemap.get_cell_source_id(0, pos) == TILE_EMPTY:
 			continue
@@ -281,8 +303,7 @@ func _create_gold_cluster(center: Vector2i, size: int) -> void:
 			continue
 
 		# Don't place gold in bedrock tiles (side walls, bottom layer)
-		var tile_atlas: Vector2i = tilemap.get_cell_atlas_coords(0, pos)
-		if tile_atlas == TILE_BEDROCK_ATLAS:
+		if bedrock_tiles.has(pos):
 			continue
 
 		# Create deposit
@@ -301,14 +322,13 @@ func _create_gold_cluster(center: Vector2i, size: int) -> void:
 ## @return Dictionary: {success: bool, has_gold: bool, gold_amount: int}
 func dig_tile(tile_pos: Vector2i) -> Dictionary:
 	var tile_source: int = tilemap.get_cell_source_id(0, tile_pos)
-	var tile_atlas: Vector2i = tilemap.get_cell_atlas_coords(0, tile_pos)
 
 	# Check if tile exists and is diggable
 	if tile_source == TILE_EMPTY:
 		return {success = false, has_gold = false, gold_amount = 0}
 
-	# Bedrock is not diggable (but this shouldn't happen often as it's deep)
-	if tile_atlas == TILE_BEDROCK_ATLAS:
+	# Bedrock is not diggable (tracked in bedrock_tiles, not by atlas coord)
+	if bedrock_tiles.has(tile_pos):
 		return {success = false, has_gold = false, gold_amount = 0}
 
 	# Remove tile
@@ -367,7 +387,7 @@ func tile_to_world(tile_pos: Vector2i) -> Vector2:
 
 ## Returns true if the tile at the given position is bedrock (not diggable)
 func is_bedrock_tile(tile_pos: Vector2i) -> bool:
-	return tilemap.get_cell_atlas_coords(0, tile_pos) == TILE_BEDROCK_ATLAS
+	return bedrock_tiles.has(tile_pos)
 
 ## Returns true if there is a solid (non-empty) tile at the given position
 func has_solid_tile(tile_pos: Vector2i) -> bool:

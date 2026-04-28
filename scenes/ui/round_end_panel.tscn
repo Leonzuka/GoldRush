@@ -141,4 +141,5 @@ layout_mode = 2
 [node name="ContinueButton" type="Button" parent="CenterContainer/ResultsPanel/VBoxContainer"]
 custom_minimum_size = Vector2(360, 56)
 layout_mode = 2
+tooltip_text = "TOOLTIP_CONTINUE_AUCTION"
 text = "CONTINUE TO AUCTION"

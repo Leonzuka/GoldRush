@@ -30,6 +30,7 @@ func _ready() -> void:
 	_populate_resolution_options()
 	_populate_language_options()
 	_sync_ui_to_settings()
+	_hide_display_section_on_mobile()
 
 	window_mode_option.item_selected.connect(_on_window_mode_selected)
 	resolution_option.item_selected.connect(_on_resolution_selected)
@@ -39,6 +40,17 @@ func _ready() -> void:
 	language_option.item_selected.connect(_on_language_selected)
 	reset_button.pressed.connect(_on_reset_defaults_pressed)
 	close_button.pressed.connect(_on_close_pressed)
+
+## Window mode / resolution can't be changed on mobile — hide that whole section
+func _hide_display_section_on_mobile() -> void:
+	if not OS.has_feature("mobile"):
+		return
+	var section := get_node_or_null("PanelContainer/VBoxContainer/DisplaySection")
+	if section:
+		section.visible = false
+	var separator := get_node_or_null("PanelContainer/VBoxContainer/HSeparator")
+	if separator:
+		separator.visible = false
 
 func _populate_window_mode_options() -> void:
 	window_mode_option.clear()

@@ -21,20 +21,20 @@ const _H: float = Config.TILE_SIZE / 2.0  # half-tile = 8 px
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Group A — main branching crack (upper-right)
-const _A0: Array = [Vector2(0,  1), Vector2( 2, -1), Vector2( 5, -3), Vector2( 7, -5)]
-const _A1: Array = [Vector2( 2, -1), Vector2( 4,  1), Vector2( 6,  3)]  # branch down
-const _A2: Array = [Vector2(0,  1), Vector2(-1,  4), Vector2(-2,  7)]   # tail downward
+const _A0: Array = [Vector2( 0,  2), Vector2( 4, -2), Vector2(10, -6), Vector2(14, -10)]
+const _A1: Array = [Vector2( 4, -2), Vector2( 8,  2), Vector2(12,  6)]  # branch down
+const _A2: Array = [Vector2( 0,  2), Vector2(-2,  8), Vector2(-4, 14)]  # tail downward
 
 # Group B — counter crack (lower-left)
-const _B0: Array = [Vector2(-1,  0), Vector2(-3, -2), Vector2(-5,  0), Vector2(-6,  3)]
-const _B1: Array = [Vector2(-3, -2), Vector2(-2, -5)]  # branch up
+const _B0: Array = [Vector2(-2,  0), Vector2(-6, -4), Vector2(-10,  0), Vector2(-12,  6)]
+const _B1: Array = [Vector2(-6, -4), Vector2(-4, -10)]  # branch up
 
 # Group C — thin diagonal
-const _C0: Array = [Vector2( 1, -1), Vector2( 3, -4), Vector2( 2, -7)]
+const _C0: Array = [Vector2( 2, -2), Vector2( 6, -8), Vector2( 4, -14)]
 
 const _CRACK_COLOR: Color    = Color(0.06, 0.03, 0.0, 0.92)
 const _HIGHLIGHT_COLOR: Color = Color(0.9,  0.85, 0.7, 0.30)
-const _LINE_WIDTH: float     = 1.6
+const _LINE_WIDTH: float     = 3.0
 
 # ─────────────────────────────────────────────────────────────────────────────
 

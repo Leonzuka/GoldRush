@@ -1,17 +1,18 @@
 [gd_scene format=3 uid="uid://dg5ckvm46txu1"]
 
 [ext_resource type="Script" uid="uid://c5y4rjmfysyi8" path="res://scripts/systems/mining_session.gd" id="1_session"]
-[ext_resource type="Script" uid="uid://dbparl4axbg001" path="res://scripts/background/parallax_bg.gd" id="8_parallaxbg"]
 [ext_resource type="PackedScene" uid="uid://bhpj6r7vy3uxm" path="res://scenes/mining/terrain.tscn" id="2_terrain"]
 [ext_resource type="PackedScene" uid="uid://c8vg2aujnkk6b" path="res://scenes/mining/player.tscn" id="3_player"]
 [ext_resource type="PackedScene" uid="uid://dptwrvk52oqil" path="res://scenes/ui/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" uid="uid://c2y4mpxfhpdnd" path="res://scenes/ui/round_end_panel.tscn" id="5_round_end"]
 [ext_resource type="PackedScene" uid="uid://cdref1sojsxp6" path="res://scenes/ui/pause_menu.tscn" id="6_pause_menu"]
 [ext_resource type="PackedScene" uid="uid://c7d8faf0g1h2i" path="res://scenes/ui/help_dialog.tscn" id="7_help_dialog"]
+[ext_resource type="Script" uid="uid://bpgn3j1yyi137" path="res://scripts/background/parallax_bg.gd" id="8_parallaxbg"]
+[ext_resource type="PackedScene" uid="uid://dgf2mhmxqhxt0" path="res://scenes/ui/mobile_controls.tscn" id="9_mobile_controls"]
 
 [node name="MiningScene" type="Node2D" unique_id=1372228299]
 
-[node name="SkyParallax" type="ParallaxBackground" parent="."]
+[node name="SkyParallax" type="ParallaxBackground" parent="." unique_id=860736413]
 script = ExtResource("8_parallaxbg")
 
 [node name="MiningSession" type="Node" parent="." unique_id=1904570388 groups=["session_manager"]]
@@ -32,10 +33,14 @@ position = Vector2(476, 235)
 
 [node name="HUD" parent="CanvasLayer" unique_id=437824499 instance=ExtResource("4_hud")]
 offset_left = -1.0
+offset_top = -11.0
 offset_right = -1.0
+offset_bottom = -11.0
 
 [node name="RoundEndPanel" parent="CanvasLayer" unique_id=1927770287 instance=ExtResource("5_round_end")]
 
 [node name="PauseMenu" parent="CanvasLayer" unique_id=1720017149 instance=ExtResource("6_pause_menu")]
 
 [node name="HelpDialog" parent="CanvasLayer" unique_id=2071657159 instance=ExtResource("7_help_dialog")]
+
+[node name="MobileControls" parent="." unique_id=1118188657 instance=ExtResource("9_mobile_controls")]

@@ -3,14 +3,14 @@
 ## 🔴 Tarefas Imediatas
 ### Visual
 - Deixar o Menu Inicial mais estilizado com Ouro e Engrenagens
-- [ ] Parallax background na cena de mineracao (ceu, nuvens)
+- Aumentar o radar em +- 50% (número inteiro) 
 - Emprestimo para deixar o jogo mais dinâmico
 - Sistema de contratos (objetivos opcionais com recompensas: "ache 5 depositos em 30s" recompensa maior acesso a crédito ou +ouro na conta)
 
 ### Gameplay Core & Balanceamento
 - [ ] Validar balanceamento de dificuldade dos plots
-- [ ] Testar curva de dificuldade: rounds 1-5 devem ser progressivamente mais dificeis
-- [ ] Validar que 25-50 depositos por plot gera gameplay de ~2 minutos satisfatorio
+- [ ] Testar curva de dificuldade: rounds 1-5 devem ficar progressivamente mais dificeis
+- [ ] Validar que 25-50 depositos por plot gera gameplay de ~5 minutos satisfatorio
 
 ## 🟡 Phase 2: Sistema de Mercado
 
@@ -59,7 +59,6 @@
 
 ### UX
 - [ ] Tutorial interativo no primeiro round (highlight areas, setas guia)
-- [ ] Tooltips explicativos em todos os botoes
 
 ## 🟣 Phase 5: Expansao de Conteudo
 
@@ -77,7 +76,12 @@
 - [ ] Sistema de conquistas/achievements
 - [ ] Steam Workshop integration
 - [ ] Controller support (gamepad mapping)
-- [ ] Mobile port (touch controls)
+- [~] Mobile port (touch controls) — base feita; pendente:
+  - [ ] Configurar export preset para Android (precisa do Android SDK localmente)
+  - [ ] Testar APK em dispositivo real (orientation lock, latencia de toque)
+  - [ ] Joystick virtual com multi-toque (hoje só botões esquerda/direita)
+  - [ ] Pinch-to-zoom no mapa de leilão
+  - [ ] Botão de drill dedicado (atualmente: tocar no terreno)
 
 ## 📝 Ideias Secundárias
 - Customizacao visual do personagem (chapeus, picaretas, roupas)

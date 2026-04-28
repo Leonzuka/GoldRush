@@ -1,0 +1,81 @@
+[gd_scene load_steps=3 format=3 uid="uid://dgf2mhmxqhxt0"]
+
+[ext_resource type="Script" path="res://scripts/ui/mobile_controls.gd" id="1_mobile"]
+[ext_resource type="Script" path="res://scripts/ui/mobile_action_button.gd" id="2_action_button"]
+
+[node name="MobileControls" type="CanvasLayer"]
+layer = 5
+script = ExtResource("1_mobile")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -260.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 76.0
+grow_horizontal = 0
+theme_override_constants/separation = 12
+
+[node name="ScanButton" type="Button" parent="TopBar"]
+custom_minimum_size = Vector2(110, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "SCAN"
+script = ExtResource("2_action_button")
+action_name = "scan"
+
+[node name="PauseButton" type="Button" parent="TopBar"]
+custom_minimum_size = Vector2(110, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "▌▌"
+
+[node name="MoveCluster" type="HBoxContainer" parent="."]
+anchors_preset = 3
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -116.0
+offset_right = 244.0
+offset_bottom = -16.0
+grow_vertical = 0
+theme_override_constants/separation = 14
+
+[node name="LeftButton" type="Button" parent="MoveCluster"]
+custom_minimum_size = Vector2(108, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "◀"
+script = ExtResource("2_action_button")
+action_name = "move_left"
+
+[node name="RightButton" type="Button" parent="MoveCluster"]
+custom_minimum_size = Vector2(108, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "▶"
+script = ExtResource("2_action_button")
+action_name = "move_right"
+
+[node name="ActionCluster" type="VBoxContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -132.0
+offset_top = -116.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="JumpButton" type="Button" parent="ActionCluster"]
+custom_minimum_size = Vector2(116, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "JUMP"
+script = ExtResource("2_action_button")
+action_name = "jump"

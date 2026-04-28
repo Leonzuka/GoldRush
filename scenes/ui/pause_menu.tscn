@@ -51,22 +51,26 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(250, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
+tooltip_text = "TOOLTIP_RESUME"
 text = "Resume [ESC]"
 
 [node name="HelpButton" type="Button" parent="PanelContainer/VBoxContainer"]
 custom_minimum_size = Vector2(250, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
+tooltip_text = "TOOLTIP_HELP"
 text = "Help [H]"
 
 [node name="SettingsButton" type="Button" parent="PanelContainer/VBoxContainer"]
 custom_minimum_size = Vector2(250, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
+tooltip_text = "TOOLTIP_SETTINGS"
 text = "Settings"
 
 [node name="QuitToMenuButton" type="Button" parent="PanelContainer/VBoxContainer"]
 custom_minimum_size = Vector2(250, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
+tooltip_text = "TOOLTIP_QUIT_TO_MENU"
 text = "Quit to Menu"

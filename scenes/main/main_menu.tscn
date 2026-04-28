@@ -54,16 +54,19 @@ layout_mode = 2
 [node name="StartButton" type="Button" parent="CenterContainer/ContentPanel/VBoxContainer"]
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
+tooltip_text = "TOOLTIP_NEW_GAME"
 text = "NEW GAME"
 
 [node name="SettingsButton" type="Button" parent="CenterContainer/ContentPanel/VBoxContainer"]
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
+tooltip_text = "TOOLTIP_SETTINGS"
 text = "SETTINGS"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/ContentPanel/VBoxContainer"]
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
+tooltip_text = "TOOLTIP_QUIT"
 text = "QUIT"
 
 [node name="VersionLabel" type="Label" parent="."]

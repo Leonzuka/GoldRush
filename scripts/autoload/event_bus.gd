@@ -9,6 +9,7 @@ extends Node
 
 ## Emitted when auction is won (by player or NPC)
 ## @param plot_data: PlotData resource containing terrain seed and richness
+@warning_ignore("unused_signal")
 signal auction_won(plot_data: Resource)
 
 # ============================================================================

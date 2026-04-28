@@ -15,11 +15,11 @@ const MAX_PLOT_PRICE: int = 500
 # MINING SESSION CONSTANTS
 # ============================================================================
 
-const ROUND_TIME_LIMIT: float = 120.0  # 2 minutes
+const ROUND_TIME_LIMIT: float = 300.0  # 5 minutes
 const STORAGE_CAPACITY: int = 500      # Gold goal threshold (not a hard cap)
 const STORAGE_GOAL_BONUS: int = 300    # Money bonus for filling storage
 const DRILL_SPEED: float = 3.0         # Tiles per second
-const DRILL_REACH: float = 48.0        # Pixels from player (3 tiles)
+const DRILL_REACH: float = 64.0        # Pixels from player (2 tiles @ 32px)
 
 # ============================================================================
 # SCANNER CONSTANTS
@@ -34,7 +34,7 @@ const SCAN_COOLDOWN: float = 3.0       # Seconds between scans
 
 const TERRAIN_WIDTH: int = 100         # Tiles
 const TERRAIN_HEIGHT: int = 50         # Tiles
-const TILE_SIZE: int = 16              # Pixels
+const TILE_SIZE: int = 32              # Pixels
 
 const MIN_GOLD_DEPOSITS: int = 25
 const MAX_GOLD_DEPOSITS: int = 50
@@ -63,7 +63,7 @@ const RELIC_MIN_DEPTH: int = 20
 const FOSSIL_COUNT_MIN: int = 5
 const FOSSIL_COUNT_MAX: int = 10
 const FOSSIL_MIN_DEPTH: int = 10    # Row 10+
-const FOSSIL_DISPLAY_PX: float = 32.0  # 2×2 tiles (2 * TILE_SIZE)
+const FOSSIL_DISPLAY_PX: float = 64.0  # 2×2 tiles (2 * TILE_SIZE)
 
 # ============================================================================
 # AUCTION CONSTANTS
