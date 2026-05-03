@@ -34,6 +34,15 @@ const _BEDROCK_SPARK_INTERVAL: float = 0.12
 var _drill_overlay: DrillOverlay
 
 # ============================================================================
+# UPGRADE-AWARE GETTERS
+# ============================================================================
+
+## Effective reach after applying drill_reach upgrade multiplier.
+## Used by player_controller._draw() so the visual range circle matches.
+func get_effective_reach() -> float:
+	return drill_reach * UpgradeManager.drill_reach_multiplier
+
+# ============================================================================
 # INITIALIZATION
 # ============================================================================
 
@@ -73,7 +82,7 @@ func _process(delta: float) -> void:
 		var player_pos: Vector2 = player.global_position
 
 		# Check reach distance
-		if player_pos.distance_to(mouse_pos) <= drill_reach:
+		if player_pos.distance_to(mouse_pos) <= get_effective_reach():
 			is_out_of_range = false
 			var target_tile: Vector2i = terrain_manager.world_to_tile(mouse_pos)
 			attempt_drill(target_tile, delta)
@@ -127,8 +136,8 @@ func attempt_drill(tile_pos: Vector2i, delta: float) -> void:
 		current_target_tile = tile_pos
 		drill_progress = 0.0
 
-	# Increment drill progress
-	drill_progress += drill_speed * delta
+	# Increment drill progress (folds in upgrade speed multiplier)
+	drill_progress += drill_speed * UpgradeManager.drill_speed_multiplier * delta
 
 	# Update crack overlay
 	var tile_world_pos: Vector2 = terrain_manager.tile_to_world(tile_pos)

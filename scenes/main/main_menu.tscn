@@ -51,6 +51,12 @@ horizontal_alignment = 1
 [node name="HSeparator" type="HSeparator" parent="CenterContainer/ContentPanel/VBoxContainer"]
 layout_mode = 2
 
+[node name="ContinueButton" type="Button" parent="CenterContainer/ContentPanel/VBoxContainer"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+tooltip_text = "TOOLTIP_CONTINUE"
+text = "CONTINUE"
+
 [node name="StartButton" type="Button" parent="CenterContainer/ContentPanel/VBoxContainer"]
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
@@ -83,3 +89,50 @@ grow_horizontal = 0
 grow_vertical = 0
 text = "v0.1.0"
 theme_override_font_sizes/font_size = 11
+
+[node name="DebugPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -240.0
+offset_right = 220.0
+offset_bottom = -10.0
+grow_vertical = 0
+
+[node name="VBox" type="VBoxContainer" parent="DebugPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DebugHeader" type="Label" parent="DebugPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "[ DEBUG ] F2 to toggle"
+horizontal_alignment = 1
+
+[node name="HSep" type="HSeparator" parent="DebugPanel/VBox"]
+layout_mode = 2
+
+[node name="MineNormalButton" type="Button" parent="DebugPanel/VBox"]
+custom_minimum_size = Vector2(200, 36)
+layout_mode = 2
+text = "Mine: Normal (x1.0)"
+
+[node name="MineRichButton" type="Button" parent="DebugPanel/VBox"]
+custom_minimum_size = Vector2(200, 36)
+layout_mode = 2
+text = "Mine: Rich (x1.5)"
+
+[node name="MinePoorButton" type="Button" parent="DebugPanel/VBox"]
+custom_minimum_size = Vector2(200, 36)
+layout_mode = 2
+text = "Mine: Poor (x0.5)"
+
+[node name="HSep2" type="HSeparator" parent="DebugPanel/VBox"]
+layout_mode = 2
+
+[node name="AddMoneyButton" type="Button" parent="DebugPanel/VBox"]
+custom_minimum_size = Vector2(200, 36)
+layout_mode = 2
+text = "+ $5000"

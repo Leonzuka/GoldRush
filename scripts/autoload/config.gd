@@ -15,7 +15,13 @@ const MAX_PLOT_PRICE: int = 500
 # MINING SESSION CONSTANTS
 # ============================================================================
 
-const ROUND_TIME_LIMIT: float = 300.0  # 5 minutes
+## Round duration tiers — early rounds are short (player has few resources/upgrades),
+## later rounds expand to give time for deeper strategy. Always read via
+## get_round_time_limit(round_num); never reference these constants directly.
+const ROUND_TIME_EARLY: float = 300.0  # rounds 1-3: 5 min
+const ROUND_TIME_MID: float   = 600.0  # rounds 4-6: 10 min
+const ROUND_TIME_LATE: float  = 900.0  # rounds 7+:  15 min
+
 const STORAGE_CAPACITY: int = 500      # Gold goal threshold (not a hard cap)
 const STORAGE_GOAL_BONUS: int = 300    # Money bonus for filling storage
 const DRILL_SPEED: float = 3.0         # Tiles per second
@@ -25,7 +31,7 @@ const DRILL_REACH: float = 64.0        # Pixels from player (2 tiles @ 32px)
 # SCANNER CONSTANTS
 # ============================================================================
 
-const SCAN_RADIUS: float = 80.0        # Pixels
+const SCAN_RADIUS: float = 120.0       # Pixels (~50% larger than original 80)
 const SCAN_COOLDOWN: float = 3.0       # Seconds between scans
 
 # ============================================================================
@@ -142,6 +148,19 @@ const NPC_PROFILES: Dictionary = {
 const NPC_BASE_AGGRESSION: float = 0.2  # 20% chance to outbid
 const NPC_AGGRESSION_SCALING: float = 0.05  # +5% per round
 
+## Steal phase: aggressive/cunning NPCs may steal a plot from a weaker NPC
+## by paying STEAL_MULTIPLIER_MIN..MAX × the current price.
+const STEAL_MULTIPLIER_MIN: float = 1.2
+const STEAL_MULTIPLIER_MAX: float = 1.5
+
+# ============================================================================
+# LOAN SYSTEM
+# ============================================================================
+
+const LOAN_INTEREST_RATE: float = 0.10  # 10% per round
+const LOAN_BASE_AMOUNT: int = 1000      # Base amount used by get_max_loan()
+const LOAN_HARD_CAP: int = 5000         # Absolute ceiling regardless of round
+
 # ============================================================================
 # PLAYER CONSTANTS
 # ============================================================================
@@ -163,6 +182,31 @@ func get_deposit_count(richness: float) -> int:
 	var base_count: float = float(MIN_GOLD_DEPOSITS + MAX_GOLD_DEPOSITS) / 2.0
 	return int(base_count * richness)
 
+## Round duration in seconds — short early rounds, longer mid/late.
+## Adds UpgradeManager.session_time_bonus so the time-extension upgrade
+## flows through every consumer of this helper.
+func get_round_time_limit(round_num: int) -> float:
+	var base: float
+	if round_num <= 3:
+		base = ROUND_TIME_EARLY
+	elif round_num <= 6:
+		base = ROUND_TIME_MID
+	else:
+		base = ROUND_TIME_LATE
+	return base + UpgradeManager.session_time_bonus
+
+## Plot price multiplier — plots get more expensive each round
+func get_plot_price_multiplier(round_num: int) -> float:
+	return 1.0 + float(round_num - 1) * 0.15
+
+## NPC budget multiplier — NPCs scale their war chest with the player's progression
+func get_npc_budget_multiplier(round_num: int) -> float:
+	return 1.0 + float(round_num - 1) * 0.20
+
+## Maximum loan available this round (scales with progression, capped)
+func get_max_loan(round_num: int) -> int:
+	return mini(int(LOAN_BASE_AMOUNT * (1.0 + round_num * 0.5)), LOAN_HARD_CAP)
+
 # ============================================================================
 # UI COLOR CONSTANTS (mirrors UITheme palette for code without UITheme dep)
 # ============================================================================
@@ -177,3 +221,43 @@ const UI_COLOR_TEXT_MUTED    := Color(0.753, 0.627, 0.376)  # #C0A060
 const UI_COLOR_DANGER        := Color(0.545, 0.125, 0.125)  # #8B2020
 const UI_COLOR_SUCCESS       := Color(0.165, 0.420, 0.125)  # #2A6B20
 const UI_COLOR_BORDER_GOLD   := Color(0.545, 0.412, 0.078)  # #8B6914
+
+# ============================================================================
+# UPGRADE DEFINITIONS
+# ============================================================================
+
+## Cost growth per level: cost = base_cost * pow(GROWTH, current_level)
+const UPGRADE_COST_GROWTH: float = 1.6
+
+## Upgrade catalog. Keys iterate in declaration order (used to lay out the shop grid).
+##
+## effect_kind:
+##   "multiplier"          → modifier = 1.0 + effect_per_level * level (e.g. drill speed +20%/lv)
+##   "multiplier_inverse"  → modifier = max(0.25, 1.0 - effect_per_level * level) (e.g. cooldown -15%/lv)
+##   "additive"            → bonus = effect_per_level * level (e.g. +200 storage/lv)
+const UPGRADE_DEFINITIONS: Dictionary = {
+	"drill_speed":   { "label": "UPGRADE_DRILL_SPEED",   "icon": "🔨",
+						"base_cost": 200, "max_level": 5,
+						"effect_per_level": 0.20, "effect_kind": "multiplier" },
+	"storage":       { "label": "UPGRADE_STORAGE",        "icon": "📦",
+						"base_cost": 250, "max_level": 5,
+						"effect_per_level": 200, "effect_kind": "additive" },
+	"scan_radius":   { "label": "UPGRADE_SCAN_RADIUS",    "icon": "📡",
+						"base_cost": 220, "max_level": 5,
+						"effect_per_level": 0.25, "effect_kind": "multiplier" },
+	"drill_reach":   { "label": "UPGRADE_DRILL_REACH",    "icon": "🪝",
+						"base_cost": 180, "max_level": 4,
+						"effect_per_level": 0.25, "effect_kind": "multiplier" },
+	"scan_cooldown": { "label": "UPGRADE_SCAN_COOLDOWN",  "icon": "⏱",
+						"base_cost": 240, "max_level": 5,
+						"effect_per_level": 0.15, "effect_kind": "multiplier_inverse" },
+	"move_speed":    { "label": "UPGRADE_MOVE_SPEED",     "icon": "👟",
+						"base_cost": 160, "max_level": 4,
+						"effect_per_level": 0.15, "effect_kind": "multiplier" },
+	"session_time":  { "label": "UPGRADE_SESSION_TIME",   "icon": "⏳",
+						"base_cost": 280, "max_level": 4,
+						"effect_per_level": 30, "effect_kind": "additive" },
+	"gold_value":    { "label": "UPGRADE_GOLD_VALUE",     "icon": "💰",
+						"base_cost": 350, "max_level": 5,
+						"effect_per_level": 0.20, "effect_kind": "multiplier" },
+}

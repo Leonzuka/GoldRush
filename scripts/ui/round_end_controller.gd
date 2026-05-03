@@ -9,6 +9,7 @@ extends Control
 @onready var results_panel: PanelContainer = $CenterContainer/ResultsPanel
 @onready var header_label: Label = $CenterContainer/ResultsPanel/VBoxContainer/HeaderLabel
 @onready var gold_value_label: Label = $CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/GoldRow/GoldValueLabel
+@onready var diamond_value_label: Label = $CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/DiamondRow/DiamondValueLabel
 @onready var storage_value_label: Label = $CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/StorageRow/StorageValueLabel
 @onready var time_value_label: Label = $CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/TimeRow/TimeValueLabel
 @onready var reason_value_label: Label = $CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/ReasonRow/ReasonValueLabel
@@ -44,6 +45,7 @@ func _apply_styles() -> void:
 	grade_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_MUTED)
 	grade_desc_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_MUTED)
 	gold_value_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD_PRIMARY)
+	diamond_value_label.add_theme_color_override("font_color", Color(0.4, 0.9, 1.0))
 	time_value_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_WARM)
 	storage_value_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_WARM)
 
@@ -59,11 +61,18 @@ func _on_round_ended(stats: Dictionary) -> void:
 	var goal_reached: bool = stats.gold_collected >= Config.STORAGE_CAPACITY
 
 	header_label.text = tr("ROUND_COMPLETE") % GameManager.round_number
-	time_value_label.text = "%.1fs / %.0fs" % [stats.time_used, Config.ROUND_TIME_LIMIT]
+	var round_time_limit: float = stats.get("time_limit", Config.get_round_time_limit(GameManager.round_number))
+	time_value_label.text = "%.1fs / %.0fs" % [stats.time_used, round_time_limit]
 	storage_value_label.text = tr("GOAL_REACHED") % Config.STORAGE_GOAL_BONUS if goal_reached else tr("NOT_REACHED")
 	storage_value_label.add_theme_color_override("font_color",
 		UITheme.COLOR_GOLD_BRIGHT if goal_reached else UITheme.COLOR_TEXT_MUTED)
 	gold_value_label.text = "0"
+
+	var rare_items: Dictionary = stats.get("rare_items", {})
+	var diamond_count: int = rare_items.get("diamond", 0)
+	diamond_value_label.text = str(diamond_count)
+	diamond_value_label.add_theme_color_override("font_color",
+		Color(0.4, 0.9, 1.0) if diamond_count > 0 else UITheme.COLOR_TEXT_MUTED)
 
 	# Set reason label
 	match stats.get("reason", ""):
@@ -80,6 +89,7 @@ func _on_round_ended(stats: Dictionary) -> void:
 	grade_label.modulate.a = 0.0
 	grade_desc_label.modulate.a = 0.0
 	continue_button.modulate.a = 0.0
+	continue_button.disabled = true
 	results_panel.modulate.a = 0.0
 
 	visible = true
@@ -110,6 +120,7 @@ func _on_round_ended(stats: Dictionary) -> void:
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	await btn_tween.finished
 
+	continue_button.disabled = false
 	# Pulsing scale animation on button to draw attention
 	_start_button_pulse()
 

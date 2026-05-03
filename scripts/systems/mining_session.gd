@@ -7,7 +7,9 @@ class_name MiningSession
 # EXPORTS
 # ============================================================================
 
-@export var time_limit: float = Config.ROUND_TIME_LIMIT
+## Set per round in _on_mining_started via Config.get_round_time_limit().
+## The @export default is just a fallback for editor previews.
+@export var time_limit: float = Config.ROUND_TIME_EARLY
 @export var storage_capacity: int = Config.STORAGE_CAPACITY
 
 # ============================================================================
@@ -33,6 +35,7 @@ func _ready() -> void:
 	EventBus.rare_collected.connect(_on_rare_collected)
 	EventBus.mining_started.connect(_on_mining_started)
 	EventBus.end_mining_requested.connect(_on_end_mining_requested)
+	EventBus.upgrades_changed.connect(_on_upgrades_changed)
 	print("[MiningSession] Connected to signals, waiting for mining_started event")
 
 # ============================================================================
@@ -46,8 +49,9 @@ func start_session() -> void:
 	rare_items_collected = {}
 	is_active = true
 	_storage_goal_reached = false
+	storage_capacity = Config.STORAGE_CAPACITY + UpgradeManager.storage_capacity_bonus
 	EventBus.resource_storage_changed.emit(0, storage_capacity)
-	print("[MiningSession] Session started - timer active")
+	print("[MiningSession] Session started - timer active (capacity=%d)" % storage_capacity)
 
 func _process(delta: float) -> void:
 	if not is_active:
@@ -70,9 +74,12 @@ func end_session(reason: String = "Unknown") -> void:
 	var stats: Dictionary = {
 		"gold_collected": gold_collected,
 		"time_used": elapsed_time,
+		"time_limit": time_limit,
+		"round_number": GameManager.round_number,
 		"efficiency": gold_collected / max(elapsed_time, 0.1),
 		"reason": reason,
 		"rare_items": rare_items_collected.duplicate(),
+		"storage_goal_reached": _storage_goal_reached,
 	}
 
 	print("[Session] Ended: %s | Gold: %d | Time: %.1fs" % [reason, gold_collected, elapsed_time])
@@ -106,8 +113,17 @@ func _on_rare_collected(type: String, amount: int) -> void:
 func _on_end_mining_requested() -> void:
 	end_session("Player ended")
 
+## Recompute capacity when an upgrade is purchased mid-round
+func _on_upgrades_changed() -> void:
+	if not is_active:
+		return
+	storage_capacity = Config.STORAGE_CAPACITY + UpgradeManager.storage_capacity_bonus
+	EventBus.resource_storage_changed.emit(gold_collected, storage_capacity)
+
 func _on_mining_started(plot_data: Resource) -> void:
-	print("[MiningSession] Mining started with plot: %s (seed=%d, richness=%.2f)" % [plot_data.plot_name, plot_data.terrain_seed, plot_data.gold_richness])
+	# Resolve the round-specific time budget exactly once, here at session start.
+	time_limit = Config.get_round_time_limit(GameManager.round_number)
+	print("[MiningSession] Mining started with plot: %s (seed=%d, richness=%.2f, time_limit=%.0fs)" % [plot_data.plot_name, plot_data.terrain_seed, plot_data.gold_richness, time_limit])
 
 	# Find TerrainManager (it's in the same scene as us)
 	if not terrain_manager:

@@ -80,6 +80,30 @@ signal money_changed(new_amount: int)
 signal game_over()
 
 # ============================================================================
+# LOAN SIGNALS
+# ============================================================================
+
+## Emitted when a new loan is taken
+@warning_ignore("unused_signal")
+signal loan_taken(amount: int, total_debt: int)
+
+## Emitted at round end after interest is applied
+@warning_ignore("unused_signal")
+signal loan_interest_applied(interest: int, total_debt: int)
+
+## Emitted whenever debt changes (loan, repay, interest)
+@warning_ignore("unused_signal")
+signal debt_changed(total_debt: int)
+
+# ============================================================================
+# AUCTION STEAL SIGNALS
+# ============================================================================
+
+## Emitted when an aggressive/cunning NPC steals a plot from another NPC
+@warning_ignore("unused_signal")
+signal npc_stole_plot(plot_data: Resource, thief_name: String, victim_name: String)
+
+# ============================================================================
 # DEBUG SIGNALS
 # ============================================================================
 
@@ -116,3 +140,25 @@ signal settings_opened()
 ## Emitted when settings menu is closed
 @warning_ignore("unused_signal")
 signal settings_closed()
+
+# ============================================================================
+# UPGRADE SIGNALS
+# ============================================================================
+
+## Emitted when an upgrade is purchased
+## @param upgrade_id: The upgrade identifier (e.g., "drill_speed")
+## @param new_level: The level after purchase
+@warning_ignore("unused_signal")
+signal upgrade_purchased(upgrade_id: String, new_level: int)
+
+## Emitted whenever any upgrade modifier changes (purchase or reset)
+@warning_ignore("unused_signal")
+signal upgrades_changed()
+
+## Emitted when shop dialog opens
+@warning_ignore("unused_signal")
+signal shop_opened()
+
+## Emitted when shop dialog closes
+@warning_ignore("unused_signal")
+signal shop_closed()

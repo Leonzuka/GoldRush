@@ -23,6 +23,7 @@ var _auction_system = null     # AuctionSystem ref (for player_rps_history)
 var _player_wins: int = 0
 var _npc_wins: int = 0
 var _round_active: bool = false  # Blocks input during NPC "thinking" delay
+var _is_defense: bool = false    # True when NPC initiated the challenge (player defends)
 
 # UI nodes built in _ready()
 var _score_label: Label
@@ -42,11 +43,12 @@ func _ready() -> void:
 
 ## Start the minigame for the given plot and NPC
 ## @param auction_system_ref: AuctionSystem node — used to record player_rps_history
-func start_minigame(plot: PlotData, npc_name: String, npc_agent, auction_system_ref = null) -> void:
+func start_minigame(plot: PlotData, npc_name: String, npc_agent, auction_system_ref = null, is_defense: bool = false) -> void:
 	_plot = plot
 	_npc_name = npc_name
 	_npc_agent = npc_agent
 	_auction_system = auction_system_ref
+	_is_defense = is_defense
 	_player_wins = 0
 	_npc_wins = 0
 	_round_active = true
@@ -286,12 +288,20 @@ func _on_player_choice(choice: String) -> void:
 
 func _show_final_result() -> void:
 	var player_won := _player_wins >= 2
-	if player_won:
-		_result_label.text = "VICTORY! You claimed %s!" % _plot.plot_name
-		_result_label.add_theme_color_override("font_color", Color(0.25, 1.0, 0.45))
+	if _is_defense:
+		if player_won:
+			_result_label.text = "DEFENDED! You kept %s!" % _plot.plot_name
+			_result_label.add_theme_color_override("font_color", Color(0.25, 1.0, 0.45))
+		else:
+			_result_label.text = "LOST! %s took your plot!" % _npc_name
+			_result_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 	else:
-		_result_label.text = "DEFEAT! %s keeps the plot." % _npc_name
-		_result_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+		if player_won:
+			_result_label.text = "VICTORY! You claimed %s!" % _plot.plot_name
+			_result_label.add_theme_color_override("font_color", Color(0.25, 1.0, 0.45))
+		else:
+			_result_label.text = "DEFEAT! %s keeps the plot." % _npc_name
+			_result_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 
 	_continue_btn.visible = true
 	_round_active = false
@@ -327,7 +337,7 @@ func _set_buttons_disabled(disabled: bool) -> void:
 func _populate_npc_info() -> void:
 	var title_lbl := _find_label("TitleLabel")
 	if title_lbl:
-		title_lbl.text = "Duel for %s!" % _plot.plot_name
+		title_lbl.text = "Defend %s!" % _plot.plot_name if _is_defense else "Duel for %s!" % _plot.plot_name
 
 	var npc_name_lbl := _find_label("NpcNameLabel")
 	if npc_name_lbl:

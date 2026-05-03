@@ -64,7 +64,10 @@ func _on_body_entered(body: Node2D) -> void:
 
 func collect() -> void:
 	is_collected = true
-	EventBus.gold_collected.emit(gold_value)
+	# TODO: when a market/cash-out system exists, also apply this multiplier
+	# at gold→money conversion. For now it boosts the storage gauge directly.
+	var final_value: int = int(round(float(gold_value) * UpgradeManager.gold_value_multiplier))
+	EventBus.gold_collected.emit(final_value)
 
 	# Quick shrink animation before freeing
 	var tween := create_tween()

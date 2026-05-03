@@ -3,11 +3,11 @@
 [ext_resource type="Script" uid="uid://ryv867alu1a3" path="res://scripts/player/player_controller.gd" id="1_player"]
 [ext_resource type="Script" uid="uid://cadyin6y7ura" path="res://scripts/player/drill_component.gd" id="2_drill"]
 [ext_resource type="Script" uid="uid://b35fpr8w2cn8l" path="res://scripts/player/scanner_component.gd" id="3_scanner"]
-[ext_resource type="Texture2D" uid="uid://dprotarun9x91" path="res://assets/sprites/Prota/spritesheet-table-9x9-Running_Backgroundrecorted.png" id="4_run"]
+[ext_resource type="Texture2D" uid="uid://dprotaruoaya1" path="res://assets/sprites/Prota/spritesheet-table-9x9-Running_Backgroundrecorted.png" id="4_run"]
 
 [sub_resource type="CapsuleShape2D" id="RectangleShape2D_1"]
 radius = 14.0
-height = 40.0
+height = 48.0
 
 [node name="Player" type="CharacterBody2D" unique_id=671219349 groups=["player"]]
 collision_layer = 2
@@ -22,7 +22,7 @@ hframes = 9
 vframes = 9
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1258828789]
-position = Vector2(0, 6)
+position = Vector2(0, 1)
 shape = SubResource("RectangleShape2D_1")
 
 [node name="DrillComponent" type="Node" parent="." unique_id=844516812]

@@ -64,6 +64,9 @@ var is_selected: bool = false
 var hover_tween: Tween
 var pulse_tween: Tween
 var pin_tween: Tween
+var claim_tween: Tween
+var _claim_played: bool = false
+var _mine_base_scale: float = 0.0
 var npc_pin: PanelContainer
 var npc_pin_style: StyleBoxFlat
 var npc_pin_avatar: TextureRect
@@ -185,7 +188,8 @@ func _setup_mine_sprite() -> void:
 	const FRAME_H: float = 1080.0
 	var scale_x = Config.ISO_TILE_WIDTH * 1.4 / FRAME_W
 	var scale_y = Config.ISO_TILE_HEIGHT * 1.2 / FRAME_H
-	owner_flag.scale = Vector2.ONE * min(scale_x, scale_y)
+	_mine_base_scale = min(scale_x, scale_y)
+	owner_flag.scale = Vector2.ONE * _mine_base_scale
 	owner_flag.position = Vector2.ZERO
 	owner_flag.visible = false
 
@@ -406,19 +410,23 @@ func update_visual_state() -> void:
 
 		PlotData.OwnerType.PLAYER:
 			is_hovered = false
-			modulate = Color.WHITE
-			scale = Vector2.ONE
-			terrain_sprite.modulate = Color(1.15, 1.05, 0.75, 1.0)
 			border_line.visible = true
-			border_line.width = 3.0
 			border_line.default_color = UITheme.COLOR_GOLD_BRIGHT
-			owner_flag.visible = true
 			owner_flag.modulate = Color.WHITE
 			owner_flag.play("default")
 			if name_label:
 				name_label.text = "✓ " + plot_data.plot_name
 				name_label.add_theme_color_override("font_color", Color(0.55, 0.95, 0.55))
 				name_label.visible = true
+			if not _claim_played:
+				_claim_played = true
+				_play_claim_animation()
+			else:
+				modulate = Color.WHITE
+				scale = Vector2.ONE
+				terrain_sprite.modulate = Color(1.15, 1.05, 0.75, 1.0)
+				border_line.width = 3.0
+				owner_flag.visible = true
 
 ## Animate tile when mouse hovers over it
 func _animate_hover_in() -> void:
@@ -524,3 +532,75 @@ func hide_npc_pin() -> void:
 	pin_tween = create_tween()
 	pin_tween.tween_property(npc_pin, "modulate", Color(1, 1, 1, 0), 0.15)
 	pin_tween.tween_callback(func(): npc_pin.visible = false)
+
+## Full claim animation: punch, flash, mine pop-in, border burst, gold particles
+func _play_claim_animation() -> void:
+	if claim_tween and claim_tween.is_valid():
+		claim_tween.kill()
+
+	# --- 1. Tile punch: instantly scale up, spring back ---
+	scale = Vector2(1.38, 1.38)
+	modulate = Color(2.0, 1.85, 0.6, 1.0)
+	var punch = create_tween()
+	punch.tween_property(self, "scale", Vector2.ONE, 0.55) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SPRING)
+	var flash = create_tween()
+	flash.tween_property(self, "modulate", Color.WHITE, 0.45) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+
+	# --- 2. Terrain gold flash ---
+	terrain_sprite.modulate = Color(2.2, 1.9, 0.5)
+	var terrain_flash = create_tween()
+	terrain_flash.tween_property(terrain_sprite, "modulate", Color(1.15, 1.05, 0.75), 0.6) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+
+	# --- 3. Border burst: thick → settle ---
+	border_line.width = 7.0
+	border_line.default_color = Color(1.0, 1.0, 0.5)
+	var border_anim = create_tween().set_parallel(true)
+	border_anim.tween_property(border_line, "width", 3.0, 0.5) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	border_anim.tween_property(border_line, "default_color", UITheme.COLOR_GOLD_BRIGHT, 0.4) \
+		.set_ease(Tween.EASE_OUT)
+
+	# --- 4. Mine sprite pop-in with bounce ---
+	owner_flag.visible = true
+	owner_flag.scale = Vector2(_mine_base_scale * 0.05, _mine_base_scale * 0.05)
+	owner_flag.modulate = Color(2.0, 1.8, 0.6, 0.0)
+	var mine_anim = create_tween().set_parallel(true)
+	mine_anim.tween_property(owner_flag, "scale",
+		Vector2.ONE * _mine_base_scale, 0.5) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	mine_anim.tween_property(owner_flag, "modulate", Color.WHITE, 0.35) \
+		.set_ease(Tween.EASE_OUT)
+
+	# --- 5. Gold particle burst ---
+	_spawn_claim_particles()
+
+## Spawns a one-shot burst of gold sparks at tile center
+func _spawn_claim_particles() -> void:
+	var p := CPUParticles2D.new()
+	p.z_as_relative = false
+	p.z_index = 120
+	p.emitting = false
+	p.one_shot = true
+	p.explosiveness = 0.95
+	p.amount = 24
+	p.lifetime = 0.9
+	p.direction = Vector2(0, -1)
+	p.spread = 180.0
+	p.gravity = Vector2(0, 150)
+	p.initial_velocity_min = 50.0
+	p.initial_velocity_max = 130.0
+	p.scale_amount_min = 2.5
+	p.scale_amount_max = 5.0
+	p.damping_min = 20.0
+	p.damping_max = 40.0
+	var grad := Gradient.new()
+	grad.set_color(0, Color(1.0, 0.95, 0.3, 1.0))
+	grad.add_point(0.6, Color(1.0, 0.7, 0.1, 0.8))
+	grad.add_point(1.0, Color(0.9, 0.5, 0.0, 0.0))
+	p.color_ramp = grad
+	add_child(p)
+	p.emitting = true
+	get_tree().create_timer(1.8).timeout.connect(p.queue_free)

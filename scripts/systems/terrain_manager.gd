@@ -117,7 +117,8 @@ func generate_terrain(seed_value: int, gold_richness: float) -> void:
 	_generate_fossil_decorations()
 
 	# Trigger bedrock visual overlay render
-	queue_redraw()
+	if _overlay_canvas:
+		_overlay_canvas.queue_redraw()
 
 	print("[Terrain] Generated: Seed=%d, Richness=%.2f, Deposits=%d, Rare=%d, Fossils=%d, Bedrock=%d" % [seed_value, gold_richness, deposit_count, rare_deposits.size(), fossil_decorations.size(), bedrock_tiles.size()])
 
@@ -437,11 +438,21 @@ func _ready() -> void:
 	fossil_container.name = "FossilDecorations"
 	add_child(fossil_container)
 
+	# Overlay canvas renders ABOVE TileMap (z_index > 0, added after tilemap child)
+	_overlay_canvas = Node2D.new()
+	_overlay_canvas.name = "OverlayCanvas"
+	_overlay_canvas.z_index = 10
+	add_child(_overlay_canvas)
+	_overlay_canvas.draw.connect(_draw_overlay)
+	_overlay_canvas.queue_redraw()
+
 var debug_mode: bool = false
+var _overlay_canvas: Node2D
 
 func _on_debug_mode_changed(enabled: bool) -> void:
 	debug_mode = enabled
-	queue_redraw()
+	if _overlay_canvas:
+		_overlay_canvas.queue_redraw()
 
 func _reveal_all_gold() -> void:
 	var all_positions: Array[Vector2i] = []
@@ -453,14 +464,17 @@ func _reveal_all_gold() -> void:
 	EventBus.gold_detected.emit(all_positions)
 	highlight_gold_tiles(all_positions)
 
-	queue_redraw()
+	if _overlay_canvas:
+		_overlay_canvas.queue_redraw()
 	print("[Debug] Revealed all %d gold deposits" % all_positions.size())
 
 func _draw() -> void:
-	# Always draw bedrock overlay so players can see unbreakable tiles
+	pass  # All drawing moved to _overlay_canvas to render above TileMap
+
+func _draw_overlay() -> void:
 	var half := Config.TILE_SIZE * 0.5
-	var bedrock_fill := Color(0.08, 0.04, 0.16, 0.55)   # Dark purple overlay
-	var bedrock_line := Color(0.55, 0.35, 0.75, 0.7)    # Bright purple X marks
+	var bedrock_fill := Color(0.08, 0.04, 0.16, 0.55)
+	var bedrock_line := Color(0.55, 0.35, 0.75, 0.7)
 
 	for pos in bedrock_tiles:
 		var lp: Vector2 = tilemap.map_to_local(pos)
@@ -468,16 +482,15 @@ func _draw() -> void:
 		var br := lp + Vector2(half, half)
 		var top_right := lp + Vector2(half, -half)
 		var bl := lp + Vector2(-half, half)
-		draw_rect(Rect2(tl, Vector2(Config.TILE_SIZE, Config.TILE_SIZE)), bedrock_fill)
-		draw_line(tl, br, bedrock_line, 1.0)
-		draw_line(top_right, bl, bedrock_line, 1.0)
+		_overlay_canvas.draw_rect(Rect2(tl, Vector2(Config.TILE_SIZE, Config.TILE_SIZE)), bedrock_fill)
+		_overlay_canvas.draw_line(tl, br, bedrock_line, 1.0)
+		_overlay_canvas.draw_line(top_right, bl, bedrock_line, 1.0)
 
 	if not debug_mode:
 		return
 
-	# Debug: draw circles at all gold deposit positions
 	for pos in gold_deposits.keys():
 		var world_pos: Vector2 = tile_to_world(pos)
-		var local_pos: Vector2 = to_local(world_pos)
+		var local_pos: Vector2 = _overlay_canvas.to_local(world_pos)
 		var color: Color = Color.YELLOW if gold_deposits[pos].revealed else Color.ORANGE
-		draw_circle(local_pos, 8, color)
+		_overlay_canvas.draw_circle(local_pos, 8, color)

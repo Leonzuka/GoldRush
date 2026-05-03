@@ -23,10 +23,11 @@ class NPCAuctionAgent:
 	func _init(name: String, round_num: int):
 		agent_name = name
 		var profile = Config.NPC_PROFILES.get(name, {})
-		budget = randi_range(
+		var raw_budget := randi_range(
 			profile.get("budget_min", 500),
 			profile.get("budget_max", 1500)
 		)
+		budget = int(raw_budget * Config.get_npc_budget_multiplier(round_num))
 		personality = profile.get("personality", "balanced")
 		richness_bias = profile.get("richness_bias", 1.0)
 		claim_threshold = profile.get("claim_threshold", 0.3)
@@ -133,11 +134,14 @@ func generate_plots() -> Array[PlotData]:
 			plot.grid_position = Vector2i(col, row)
 			plot.plot_name = shuffled_names[plot_idx % shuffled_names.size()]
 			plot.terrain_seed = randi()
-			plot.gold_richness = randf_range(0.5, 1.5)
+			# Late rounds see slightly richer top-end plots (more drama, harder choices)
+			var richness_top: float = 1.5 + minf(float(GameManager.round_number) * 0.05, 0.5)
+			plot.gold_richness = randf_range(0.5, richness_top)
 
-			# Price based on richness
-			plot.base_price = int(100 + (plot.gold_richness * 300))
-			plot.base_price = clampi(plot.base_price, Config.MIN_PLOT_PRICE, Config.MAX_PLOT_PRICE)
+			# Price scales with richness AND with round progression (plots get pricier)
+			var price_mult: float = Config.get_plot_price_multiplier(GameManager.round_number)
+			plot.base_price = int((100 + plot.gold_richness * 300) * price_mult)
+			plot.base_price = clampi(plot.base_price, Config.MIN_PLOT_PRICE, Config.MAX_PLOT_PRICE * 3)
 
 			plot.final_bid_price = plot.base_price
 			plot.owner_type = PlotData.OwnerType.AVAILABLE
@@ -219,9 +223,89 @@ func start_npc_turn() -> void:
 			_npc_claim_plot(agent, best_plot)
 			await get_tree().create_timer(Config.NPC_BID_DELAY * 0.35).timeout
 
+	# Phase 2: Steal phase — aggressive/cunning NPCs may outbid a weaker rival.
+	# Bounded: one steal max per agent per round; freshly stolen plots immune.
+	await _run_steal_phase()
+
 	# Small delay ensures the signal is never emitted synchronously before callers can await it
 	await get_tree().process_frame
 	npc_turn_finished.emit()
+
+## Steal phase: aggressive/cunning NPCs each get at most one chance to steal.
+## A plot stolen this turn cannot be stolen again. Targets are recomputed
+## after each steal so an outdated snapshot can't drive bad decisions.
+func _run_steal_phase() -> void:
+	var stolen_this_turn: Array = []  # PlotData refs immune to further theft
+	# Snapshot of which agents are eligible to steal — taken once, before any steal happens
+	var aggressors: Array = []
+	for agent in npc_agents:
+		if agent.personality == "aggressive" or agent.personality == "cunning":
+			aggressors.append(agent)
+
+	for agent in aggressors:
+		var target = _find_steal_target(agent, stolen_this_turn)
+		if target == null:
+			continue
+
+		var steal_price: int = int(target.final_bid_price * randf_range(
+			Config.STEAL_MULTIPLIER_MIN, Config.STEAL_MULTIPLIER_MAX
+		))
+		if agent.budget < steal_price:
+			continue
+
+		var victim_name: String = target.owner_name
+		var victim_agent := get_agent_by_name(victim_name)
+
+		npc_considering_plot.emit(target, agent.agent_name)
+		await get_tree().create_timer(Config.NPC_BID_DELAY * 0.6).timeout
+
+		# Transfer ownership
+		if victim_agent:
+			victim_agent.owned_plot = null
+		target.owner_type = PlotData.OwnerType.NPC
+		target.owner_name = agent.agent_name
+		target.final_bid_price = steal_price
+		# If thief had a plot, they release it back to the pool (still NPC-tagged
+		# from the first pass, so we mark it AVAILABLE again so victim could re-pick later)
+		if agent.owned_plot and agent.owned_plot != target:
+			var released: PlotData = agent.owned_plot
+			released.owner_type = PlotData.OwnerType.AVAILABLE
+			released.owner_name = ""
+		agent.owned_plot = target
+		agent.budget -= steal_price
+		stolen_this_turn.append(target)
+
+		EventBus.npc_stole_plot.emit(target, agent.agent_name, victim_name)
+		print("[Auction] %s stole %s from %s for $%d" % [agent.agent_name, target.plot_name, victim_name, steal_price])
+
+		await get_tree().create_timer(Config.NPC_BID_DELAY * 0.4).timeout
+
+## Pick the best plot to steal: must belong to a less-aggressive NPC,
+## must be richer than agent's current plot (worth the price hike),
+## and must not have been stolen already this turn.
+func _find_steal_target(agent: NPCAuctionAgent, stolen_this_turn: Array) -> PlotData:
+	var current_richness: float = agent.owned_plot.gold_richness if agent.owned_plot else 0.0
+	var best: PlotData = null
+	var best_richness: float = current_richness
+
+	for plot in available_plots:
+		if plot in stolen_this_turn:
+			continue
+		if plot.owner_type != PlotData.OwnerType.NPC:
+			continue
+		if plot.owner_name == agent.agent_name:
+			continue
+		var owner_agent := get_agent_by_name(plot.owner_name)
+		if owner_agent == null:
+			continue
+		if owner_agent.aggression >= agent.aggression:
+			continue  # only prey on weaker NPCs
+		if plot.gold_richness <= best_richness:
+			continue
+		best = plot
+		best_richness = plot.gold_richness
+
+	return best
 
 ## NPC claims a plot, updating ownership and emitting signal
 func _npc_claim_plot(agent: NPCAuctionAgent, plot: PlotData) -> void:

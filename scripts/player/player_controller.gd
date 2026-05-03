@@ -81,7 +81,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = -jump_velocity
 
 	var input_x: float = Input.get_axis("move_left", "move_right")
-	velocity.x = input_x * speed
+	velocity.x = input_x * speed * UpgradeManager.move_speed_multiplier
 
 	move_and_slide()
 	_update_animation(delta)
@@ -168,7 +168,7 @@ func _draw() -> void:
 	if not Input.is_action_pressed("drill"):
 		return
 
-	var reach: float = drill_component.drill_reach
+	var reach: float = drill_component.get_effective_reach()
 	if drill_component.is_out_of_range:
 		draw_arc(Vector2.ZERO, reach, 0.0, TAU, 36, Color(1.0, 0.2, 0.2, 0.7), 2.0)
 		draw_string(ThemeDB.fallback_font, Vector2(-44, -reach - 6), "Out of range", HORIZONTAL_ALIGNMENT_CENTER, 88, 11, Color(1.0, 0.3, 0.3, 0.9))

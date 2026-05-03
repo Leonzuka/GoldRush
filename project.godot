@@ -43,6 +43,7 @@ UITheme="*res://scripts/autoload/ui_theme_manager.gd"
 GameManager="*res://scripts/autoload/game_manager.gd"
 EventBus="*res://scripts/autoload/event_bus.gd"
 Config="*res://scripts/autoload/config.gd"
+UpgradeManager="*res://scripts/autoload/upgrade_manager.gd"
 
 [display]
 

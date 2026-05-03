@@ -14,8 +14,26 @@ extends Control
 @onready var scan_button: Button = $BottomBar/ScanButton
 @onready var end_button: Button = $BottomBar/EndButton
 
+const ShopDialogScript = preload("res://scripts/ui/shop_dialog_controller.gd")
+const UpgradesStripScript = preload("res://scripts/ui/upgrades_strip.gd")
+
+# Shop button + upgrades strip (created programmatically)
+var shop_button: Button
+var upgrades_strip: UpgradesStrip
+
 # FPS counter (created programmatically)
 var fps_label: Label
+
+# Speed control (created programmatically)
+var speed_button: Button
+var _is_fast_speed: bool = false
+
+# Mining session active flag — End Early only shows during an active session
+var _mining_active: bool = false
+var _last_storage_pct: float = 0.0
+var _last_time_pct: float = 1.0  # 1.0 = full time remaining
+const _END_EARLY_STORAGE_THRESHOLD: float = 0.85
+const _END_EARLY_TIME_THRESHOLD: float = 0.20
 
 # Money counting animation
 var displayed_money: int = 0
@@ -37,11 +55,23 @@ func _ready() -> void:
 	EventBus.money_changed.connect(_on_money_changed)
 	EventBus.scanner_cooldown_changed.connect(_on_scanner_cooldown_changed)
 	EventBus.storage_goal_reached.connect(_on_storage_goal_reached)
+	EventBus.mining_started.connect(_on_mining_started)
+	EventBus.round_ended.connect(_on_round_ended)
+	EventBus.game_paused.connect(_on_game_paused)
 
 	end_button.pressed.connect(func(): EventBus.end_mining_requested.emit())
+	# End Early starts hidden — surfaces only when storage is near full or time is running out
+	end_button.visible = false
 
 	# Create FPS counter
 	_create_fps_counter()
+
+	# Create speed toggle (1x / 2x)
+	_create_speed_button()
+
+	# Create shop button + upgrades strip
+	_create_shop_button()
+	_create_upgrades_strip()
 
 	# Setup tooltips
 	_setup_tooltips()
@@ -74,6 +104,99 @@ func _setup_tooltips() -> void:
 	storage_bar.tooltip_text = tr("GOLD_TOOLTIP") % [Config.STORAGE_CAPACITY, Config.STORAGE_GOAL_BONUS]
 	end_button.tooltip_text  = tr("END_EARLY_TOOLTIP")
 
+## Create speed toggle button (1x / 2x). Inserted into BottomBar before EndButton.
+func _create_speed_button() -> void:
+	speed_button = Button.new()
+	speed_button.name = "SpeedButton"
+	speed_button.text = "1x"
+	speed_button.tooltip_text = tr("SPEED_TOOLTIP") if tr("SPEED_TOOLTIP") != "SPEED_TOOLTIP" else "Toggle game speed"
+	speed_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
+	speed_button.custom_minimum_size = Vector2(56, 0)
+	speed_button.focus_mode = Control.FOCUS_NONE
+	speed_button.pressed.connect(_on_speed_toggled)
+	# Insert before EndButton so the layout reads: [Gold | StorageBar | Scan | Speed | End]
+	$BottomBar.add_child(speed_button)
+	$BottomBar.move_child(speed_button, end_button.get_index())
+
+## Create shop button. Inserted into BottomBar before SpeedButton.
+func _create_shop_button() -> void:
+	shop_button = Button.new()
+	shop_button.name = "ShopButton"
+	shop_button.text = tr("SHOP")
+	shop_button.add_theme_stylebox_override("normal", UITheme.action_button_style())
+	shop_button.custom_minimum_size = Vector2(90, 40)
+	shop_button.focus_mode = Control.FOCUS_NONE
+	shop_button.pressed.connect(_on_shop_pressed)
+	$BottomBar.add_child(shop_button)
+	# Place shop button right after StorageBar, before ScanButton
+	$BottomBar.move_child(shop_button, scan_button.get_index())
+
+## Create upgrades strip in TopBar (right side, after MoneyChip)
+func _create_upgrades_strip() -> void:
+	upgrades_strip = UpgradesStripScript.new()
+	upgrades_strip.name = "UpgradesStrip"
+	$TopBar.add_child(upgrades_strip)
+
+func _on_shop_pressed() -> void:
+	if get_tree().paused:
+		return
+	var dlg: ShopDialogController = ShopDialogScript.new()
+	dlg.context = "mining"
+	add_child(dlg)
+	get_tree().paused = true
+	$TopBar/MoneyChip.visible = false
+	dlg.closed.connect(_on_shop_closed)
+
+func _on_shop_closed() -> void:
+	get_tree().paused = false
+	$TopBar/MoneyChip.visible = true
+	update_money_display()
+
+func _on_speed_toggled() -> void:
+	# Pausing should override speed; ignore presses while paused
+	if get_tree().paused:
+		return
+	_is_fast_speed = not _is_fast_speed
+	Engine.time_scale = 2.0 if _is_fast_speed else 1.0
+	speed_button.text = "2x" if _is_fast_speed else "1x"
+
+## Reset to normal speed without flipping the toggle state visually mid-pause.
+func _reset_time_scale() -> void:
+	_is_fast_speed = false
+	Engine.time_scale = 1.0
+	if speed_button:
+		speed_button.text = "1x"
+
+func _on_mining_started(_plot) -> void:
+	_mining_active = true
+	_last_storage_pct = 0.0
+	_last_time_pct = 1.0
+	end_button.visible = false
+	_reset_time_scale()
+
+func _on_round_ended(_stats) -> void:
+	_mining_active = false
+	end_button.visible = false
+	_reset_time_scale()
+
+func _on_game_paused() -> void:
+	# Don't keep accelerated time bleeding into the pause overlay's tweens
+	_reset_time_scale()
+
+## Always reset time scale when the HUD leaves the tree — prevents leakage
+## of 2x speed into the auction or main menu scenes.
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
+
+## Recompute End Early visibility based on session state + storage/time thresholds.
+func _refresh_end_early_visibility() -> void:
+	if not _mining_active:
+		end_button.visible = false
+		return
+	var storage_close: bool = _last_storage_pct >= _END_EARLY_STORAGE_THRESHOLD
+	var time_low: bool = _last_time_pct <= _END_EARLY_TIME_THRESHOLD
+	end_button.visible = storage_close or time_low
+
 ## Create FPS counter label programmatically
 func _create_fps_counter() -> void:
 	fps_label = Label.new()
@@ -105,6 +228,10 @@ func _on_time_updated(time_remaining: float) -> void:
 	var seconds: int = total_seconds % 60
 	time_label.text = "%02d:%02d" % [minutes, seconds]
 
+	var time_limit: float = Config.get_round_time_limit(GameManager.round_number)
+	_last_time_pct = clampf(time_remaining / max(time_limit, 0.1), 0.0, 1.0)
+	_refresh_end_early_visibility()
+
 func _on_storage_changed(current: int, max_capacity: int) -> void:
 	if current >= max_capacity:
 		gold_label.text = "%d ★" % current
@@ -113,6 +240,9 @@ func _on_storage_changed(current: int, max_capacity: int) -> void:
 		gold_label.text = "%d/%d" % [current, max_capacity]
 		storage_bar.max_value = max_capacity
 		storage_bar.value = current
+
+	_last_storage_pct = float(current) / max(float(max_capacity), 1.0)
+	_refresh_end_early_visibility()
 
 func _on_storage_goal_reached() -> void:
 	# Flash gold label gold color to celebrate the bonus

@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://c2y4mpxfhpdnd"]
+[gd_scene load_steps=4 format=3 uid="uid://c2y4mpxfhpdnd"]
 
 [ext_resource type="Script" path="res://scripts/ui/round_end_controller.gd" id="1_round_end"]
+[ext_resource type="Texture2D" path="res://assets/sprites/Gold.png" id="2_gold"]
+[ext_resource type="Texture2D" path="res://assets/sprites/Diomond.png" id="3_diamond"]
 
 [node name="RoundEndPanel" type="Control"]
 visible = false
@@ -52,6 +54,15 @@ theme_override_constants/separation = 10
 
 [node name="GoldRow" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer"]
 layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GoldIcon" type="TextureRect" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/GoldRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(24, 24)
+size_flags_vertical = 4
+texture = ExtResource("2_gold")
+stretch_mode = 5
+expand_mode = 1
 
 [node name="GoldKeyLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/GoldRow"]
 layout_mode = 2
@@ -59,6 +70,29 @@ size_flags_horizontal = 3
 text = "Gold Collected"
 
 [node name="GoldValueLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/GoldRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "0"
+horizontal_alignment = 2
+
+[node name="DiamondRow" type="HBoxContainer" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DiamondIcon" type="TextureRect" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/DiamondRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(24, 24)
+size_flags_vertical = 4
+texture = ExtResource("3_diamond")
+stretch_mode = 5
+expand_mode = 1
+
+[node name="DiamondKeyLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/DiamondRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Diamantes"
+
+[node name="DiamondValueLabel" type="Label" parent="CenterContainer/ResultsPanel/VBoxContainer/StatsContainer/DiamondRow"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "0"

@@ -71,17 +71,21 @@ func perform_scan() -> Array:
 	if not is_ready_to_scan or not terrain_manager or not player:
 		return []
 
+	# Apply upgrade multipliers
+	var effective_cooldown: float = scan_cooldown * UpgradeManager.scan_cooldown_multiplier
+	var effective_radius: float = scan_radius * UpgradeManager.scan_radius_multiplier
+
 	# Start cooldown
 	is_ready_to_scan = false
-	cooldown_timer.start(scan_cooldown)
-	EventBus.scanner_cooldown_changed.emit(scan_cooldown)
+	cooldown_timer.start(effective_cooldown)
+	EventBus.scanner_cooldown_changed.emit(effective_cooldown)
 
 	# Get player tile position
 	var player_pos: Vector2 = player.global_position
 	var center_tile: Vector2i = terrain_manager.world_to_tile(player_pos)
 
 	# Calculate radius in tiles
-	var radius_tiles: int = int(scan_radius / Config.TILE_SIZE)
+	var radius_tiles: int = int(effective_radius / Config.TILE_SIZE)
 
 	# Check all tiles in radius
 	var detected_deposits: Array[Vector2i] = []
@@ -102,7 +106,7 @@ func perform_scan() -> Array:
 	# Visual scan effect
 	var scan_effect := Node2D.new()
 	scan_effect.set_script(preload("res://scripts/effects/scan_effect.gd"))
-	scan_effect.max_radius = scan_radius
+	scan_effect.max_radius = effective_radius
 	scan_effect.global_position = player.global_position
 	get_tree().current_scene.add_child(scan_effect)
 
